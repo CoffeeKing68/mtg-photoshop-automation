@@ -75,6 +75,12 @@ def main():
             command.append(line.strip())
 
         subprocess.call(command)
+        
+        print(">" * 30 + "\n")
+        with open("logs/log.log", "r") as f:
+            print(f.read())
+        print(">" * 30)
+
     elif system == "Windows":
         pass
     elif system == "Linux":
