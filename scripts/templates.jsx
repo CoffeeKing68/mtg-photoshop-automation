@@ -47,7 +47,8 @@ var BaseTemplate = Class({
         this.layout = layout;
         this.file = file;
 
-        this.load_template(file_path);
+        this.template_path = file_path + this.template_file_name() + ".psd";
+        this.load_template();
 
         this.art_layer = app.activeDocument.layers.getByName(default_layer);
         this.legal = app.activeDocument.layers.getByName(LayerNames.LEGAL);
@@ -75,13 +76,12 @@ var BaseTemplate = Class({
 
         return "";
     },
-    load_template: function (file_path) {
+    load_template: function () {
         /**
          * Opens the template's PSD file in Photoshop.
          */
 
-        var template_path = file_path + "/templates/" + this.template_file_name() + ".psd"
-        var template_file = new File(template_path);
+        var template_file = new File(this.template_path);
         try {
             app.open(template_file);
         } catch (err) {
@@ -115,8 +115,11 @@ var BaseTemplate = Class({
          * sure to call this.super()) and enable_frame_layers().
          */
 
-        this.load_artwork();
-        frame_layer(this.art_layer, this.art_reference);
+        // only try to paste + scale art if it exists.
+        if (this.file && this.file.exists) {
+            this.load_artwork();
+            frame_layer(this.art_layer, this.art_reference);
+        }
         this.enable_frame_layers();
         for (var i = 0; i < this.text_layers.length; i++) {
             this.text_layers[i].execute();

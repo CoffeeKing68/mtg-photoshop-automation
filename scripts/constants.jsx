@@ -1,5 +1,7 @@
 // TODO: consistency between camelcase and snakecase
 
+var RASTER_DUPLICATE_SUFFIX = "_RASTER_DUPLICATE";
+
 var json_file_path = "/scripts/card.json";
 var image_file_path = "/scripts/card.jpg";
 

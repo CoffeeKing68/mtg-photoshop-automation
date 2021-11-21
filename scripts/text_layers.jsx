@@ -63,9 +63,15 @@ function vertically_align_text(layer, reference_layer) {
      * Rasterises a given text layer and centres it vertically with respect to the bounding box of a reference layer.
      */
 
-    layer.rasterize(RasterizeType.TEXTCONTENTS);
+    var raster_layer = layer.duplicate(app.activeDocument, ElementPlacement.INSIDE);
+    raster_layer.name = layer.name + RASTER_DUPLICATE_SUFFIX;
+    raster_layer.move(layer, ElementPlacement.PLACEBEFORE);
+    raster_layer.rasterize(RasterizeType.TEXTCONTENTS);
+
+    layer.visible = false;
+
     select_layer_pixels(reference_layer);
-    app.activeDocument.activeLayer = layer;
+    app.activeDocument.activeLayer = raster_layer;
     align_vertical(layer);
     clear_selection();
 }
@@ -133,6 +139,9 @@ var TextField = Class({
     },
     execute: function () {
         this.layer.visible = true;
+
+
+
         this.layer.textItem.contents = this.text_contents;
         this.layer.textItem.color = this.text_colour;
     }
@@ -282,8 +291,7 @@ var FormattedTextArea = Class({
             if (this.is_centred) {
                 // ensure the layer is centred horizontally as well
                 select_layer_pixels(this.reference_layer);
-                app.activeDocument.activeLayer = this.layer;
-                align_horizontal();
+                align_horizontal(this.layer);
                 clear_selection();
             }
         }

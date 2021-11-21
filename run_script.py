@@ -75,17 +75,30 @@ def main():
             command.append(line.strip())
 
         subprocess.call(command)
-        
-        print(">" * 30 + "\n")
-        with open("logs/log.log", "r") as f:
-            print(f.read())
-        print(">" * 30)
-
     elif system == "Windows":
-        pass
+        vbsScriptCode =f"""
+        'PsJavaScriptExecutionMode Enums
+        Const psNeverShowDebugger = 1, psDebuggerOnError = 2, psBeforeRunning = 3
+
+        Dim appRef
+        Set appRef = CreateObject("Photoshop.Application")
+
+        appRef.DoJavaScript  "#include '{js}'; main();", Array(), 1
+        """
+        vbsScriptFileName = "temp/windowsVbsScript.vbs"
+        with open(vbsScriptFileName, "w") as f:
+            f.write(vbsScriptCode)
+
+        command = ["cscript", vbsScriptFileName]
+        subprocess.call(command)
+
     elif system == "Linux":
         pass
-
+    
+    print(">" * 30 + "\n")
+    with open("logs/log.log", "r") as f:
+        print(f.read())
+    print(">" * 30)
 
 if __name__ == "__main__":
     main()

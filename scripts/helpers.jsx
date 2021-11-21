@@ -72,11 +72,16 @@ function clear_selection() {
     app.activeDocument.selection.select([]);
 }
 
-function align(align_type) {
+function align(align_type, layer) {
     /**
      * Align the currently active layer with respect to the current selection, either vertically or horizontally.
      * Intended to be used with align_vertical() or align_horizontal().
      */
+    
+    if (layer) {
+        var activeLayer = app.activeDocument.activeLayer;
+        app.activeDocument.activeLayer = layer;
+    }
 
     var idAlgn = charIDToTypeID("Algn");
     var desc = new ActionDescriptor();
@@ -92,22 +97,26 @@ function align(align_type) {
     var idAdCH = charIDToTypeID(align_type);  // align type - "AdCV" for vertical, "AdCH" for horizontal
     desc.putEnumerated(idUsng, idADSt, idAdCH);
     executeAction(idAlgn, desc, DialogModes.NO);
+    
+    if (layer) {
+        app.activeDocument.activeLayer = activeLayer;
+    }
 }
 
-function align_vertical() {
+function align_vertical(layer) {
     /**
      * Align the currently active layer vertically with respect to the current selection.
      */
 
-    align("AdCV");
+    align("AdCV", layer);
 }
 
-function align_horizontal() {
+function align_horizontal(layer) {
     /**
      * Align the currently active layer horizontally with respect to the current selection.
      */
 
-    align("AdCH");
+    align("AdCH", layer);
 }
 
 function frame_layer(layer, reference_layer) {
@@ -124,9 +133,9 @@ function frame_layer(layer, reference_layer) {
     layer.resize(scale_factor, scale_factor, AnchorPosition.TOPLEFT);
 
     select_layer_pixels(reference_layer);
-    app.activeDocument.activeLayer = layer;
-    align_horizontal();
-    align_vertical();
+    
+    align_horizontal(layer);
+    align_vertical(layer);
     clear_selection();
 }
 

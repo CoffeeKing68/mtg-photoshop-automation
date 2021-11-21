@@ -15,7 +15,17 @@ function log(s) {
     if (s === undefined) s = "";
 
     logFile.open("a", "TEXT");
-    logFile.write(s + "\n");
+    if (typeof s === 'object') {
+        try {
+            // not all objects can be stringified
+            logFile.write(JSON.stringify(s, null, 2));
+        } catch (e) {
+            logFile.write(s);
+        }
+    } else {
+        logFile.write(s);
+    }
+    logFile.write("\n");
     logFile.close();
 }
 
