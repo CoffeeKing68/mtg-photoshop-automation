@@ -1,4 +1,5 @@
 {
     "photoshopTarget": "Adobe Photoshop CC 2017",
-    "javascriptToRun": "scripts/test.jsx"
+    "javascriptToRun": "scripts/test.jsx",
+    "templatesLocation": "templates"
 } 

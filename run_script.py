@@ -15,6 +15,7 @@ def get_args():
     parser.add_argument(
         '--photoshop', '-ps', help='Target Photoshop app (only need end code `eg. CS6`)')
     parser.add_argument('--javascript', '-js', help='Script to run')
+    parser.add_argument('--templateLocation', '-templates', help='templates location')
 
     args = parser.parse_args()
 
@@ -26,6 +27,7 @@ def get_args():
         config = {
             "photoshopTarget": "",
             "javascriptToRun": "",
+            "templateLocation": "",
         }
 
     # args take precedent
@@ -51,12 +53,22 @@ def get_args():
     if not Path(js).exists():
         print("Javascript file doesn't exist!") 
         exit()
+    
+    if args.templateLocation:
+        templateLocation = args.templateLocation
+    elif config["templateLocation"]:
+        templateLocation =config["templateLocation"] 
+    else:
+        templateLocation = "templates"
 
-    return ps, js
+    return ps, js, templateLocation
 
 
 def main():
-    ps, js = get_args()
+    ps, js, templateLocation = get_args()
+    
+    # print(templateLocation)
+    # exit()
 
     system = platform.system()
     if system == "Darwin":  # MacOS
@@ -65,7 +77,7 @@ def main():
         applescript_string = f"""tell application "{ps}"
             with timeout of 3600 seconds
                 activate
-                set js to "#include '{js}'; main();"
+                set js to "#include '{js}'; var templateLocation = '{templateLocation}'; main();"
                 do javascript js
             end timeout
         end tell"""
@@ -78,6 +90,7 @@ def main():
     elif system == "Windows":
         # need to double up the backslashes for windows
         js = str(js).replace("\\", "\\\\")
+        templateLocation = str(Path(templateLocation).resolve()).replace("\\", "\\\\")
 
         vbsScriptCode =f"""
         'PsJavaScriptExecutionMode Enums
@@ -86,7 +99,7 @@ def main():
         Dim appRef
         Set appRef = CreateObject("Photoshop.Application")
 
-        appRef.DoJavaScript  "#include '{js}'; main();", Array(), 1
+        appRef.DoJavaScript  "#include '{js}'; var templateLocation = '{templateLocation}'; main();", Array(), 1
         """
         vbsScriptFileName = "temp/windowsVbsScript.vbs"
         with open(vbsScriptFileName, "w") as f:

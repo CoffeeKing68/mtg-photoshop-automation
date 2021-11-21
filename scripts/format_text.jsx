@@ -215,6 +215,7 @@ function format_text(layer, input_string, italics_strings, flavour_index, is_cen
     // log(myFontSize);
     // log(myFontScalar);
     
+    // make sure in your photoshop settings, your units are pixels.
     myFontSize *= myFontScalar;
     
     // log(myFontSize);

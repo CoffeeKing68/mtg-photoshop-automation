@@ -1,3 +1,5 @@
+// var templateLocation is set in run_script.py
+// main(); is called
 var MACOS = File.fs == "Macintosh";
 
 #include "json2.js";
@@ -10,9 +12,12 @@ var MACOS = File.fs == "Macintosh";
 var filePath = File($.fileName).parent.parent.fsName;
 
 function main2() {
-    // read json
     card = { "artist": "Adam Paquette", "layout": "normal", "name": "Ancient Tomb", "text": "{T}: Add {C}{C}. Ancient Tomb deals 2 damage to you.", "power": null, "toughness": null, "type": "Land", "types": null, "rarity": "mythic", "card_faces": null, "flavor_name": null, "printed_name": null, "number": "21", "original_text": "{T}: Add {C}{C}. Ancient Tomb deals 2 damage to you.", "original_type": "Land", "set": "ZNE", "flavor": null, "image_location": null, "count": 30 };
 
+    exportCard(card);
+}
+
+function exportCard(card) {
     // fixes for scryfall codes
     card.oracle_text = card.text ? card.text : "";
     card.flavor_text = card.flavor ? card.flavor : "";
@@ -43,16 +48,12 @@ function main2() {
     var artFile = new File(card.image_location);
 
     // layout, ArtFileObj, relativePath
-    var templateLocation = "~/Downloads/templates/";
-    if (!MACOS) templateLocation = filePath + "\\..\\new_templates\\";
-    
     var template = new WomensDayTemplate(layout, artFile, templateLocation);
 
-    log('executing');
-
     template.execute();
-    
+
     // save
+    saveSmallImage("out", card.name + "_" + card.id + " (" + card.artist + ")");
 }
 
 function cardIsBasic(card) {
@@ -69,5 +70,14 @@ function main() {
         log(error.message);
         log(error.fileName + ":" + error.line);
     }
+}
+
+function loadJson(jsonPath) {
+    var jsonFile = new File(jsonPath);
+    jsonFile.open('r');
+    var json = jsonFile.read();
+    jsonFile.close();
+
+    return JSON.parse(json);
 }
 

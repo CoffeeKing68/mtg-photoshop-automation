@@ -47,7 +47,7 @@ var BaseTemplate = Class({
         this.layout = layout;
         this.file = file;
 
-        this.template_path = file_path + this.template_file_name() + ".psd";
+        this.template_path = file_path + "/" + this.template_file_name() + ".psd";
         this.load_template();
 
         this.art_layer = app.activeDocument.layers.getByName(default_layer);
@@ -93,19 +93,19 @@ var BaseTemplate = Class({
 
         // TODO: if that's the file that's currently open, reset instead of opening? idk 
         if (template) {
-            app.activeDocument = template;
-            revertDocument();
-        } else {
-            try {
-                var template_file = new File(this.template_path);
-                app.open(template_file);
-            } catch (err) {
-                throw new Error(
-                    "\n\nFailed to open the template for this card at the following directory:\n\n"
-                    + template_path
-                    + "\n\nCheck your templates folder and try again"
-                );
-            }
+            // can also go rever route, not sure which is faster?
+            app.activeDocument.close(SaveOptions.DONOTSAVECHANGES);
+        }
+
+        try {
+            var template_file = new File(this.template_path);
+            app.open(template_file);
+        } catch (err) {
+            throw new Error(
+                "\n\nFailed to open the template for this card at the following directory:\n\n"
+                + template_path
+                + "\n\nCheck your templates folder and try again"
+            );
         }
     },
     enable_frame_layers: function () {
@@ -129,7 +129,7 @@ var BaseTemplate = Class({
          * Don't override this method! You should be able to specify the full behaviour of the template in the constructor (making 
          * sure to call this.super()) and enable_frame_layers().
          */
-        
+
         // only try to paste + scale art if it exists.
         if (this.file && this.file.exists) {
             this.load_artwork();
