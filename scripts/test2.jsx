@@ -1,4 +1,4 @@
-var MACOS = true;
+var MACOS = File.fs == "Macintosh";
 
 #include "json2.js";
 #include "layouts.jsx";
@@ -10,8 +10,6 @@ var MACOS = true;
 var filePath = File($.fileName).parent.parent.fsName;
 
 function main2() {
-    log("main2");
-    exit();
     // read json
     card = { "artist": "Adam Paquette", "layout": "normal", "name": "Ancient Tomb", "text": "{T}: Add {C}{C}. Ancient Tomb deals 2 damage to you.", "power": null, "toughness": null, "type": "Land", "types": null, "rarity": "mythic", "card_faces": null, "flavor_name": null, "printed_name": null, "number": "21", "original_text": "{T}: Add {C}{C}. Ancient Tomb deals 2 damage to you.", "original_type": "Land", "set": "ZNE", "flavor": null, "image_location": null, "count": 30 };
 
@@ -46,14 +44,17 @@ function main2() {
 
     // layout, ArtFileObj, relativePath
     var templateLocation = "~/Downloads/templates/";
-    if (!MACOS) templateLocation = "//MACBOOKPRO-B170/ashley/Downloads/templates";
+    if (!MACOS) templateLocation = filePath + "\\..\\new_templates\\";
     
-    var template = new NormalTemplate(layout, artFile, templateLocation);
+    var template = new WomensDayTemplate(layout, artFile, templateLocation);
 
     log('executing');
 
     template.execute();
+    
+    // save
 }
+
 function cardIsBasic(card) {
     return card.type.indexOf("Basic") !== -1;
 }
@@ -61,12 +62,12 @@ function cardIsBasic(card) {
 function main() {
     makeLogFile();
 
-    // try {
-    //     main2();
-    // } catch (error) {
-    //     log("Error occurred");
-    //     log(error.message);
-    //     log(error.fileName + ":" + error.line);
-    // }
+    try {
+        main2();
+    } catch (error) {
+        log("Error occurred");
+        log(error.message);
+        log(error.fileName + ":" + error.line);
+    }
 }
 

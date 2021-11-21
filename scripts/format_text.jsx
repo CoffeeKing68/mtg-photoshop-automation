@@ -195,15 +195,30 @@ function format_symbol(primary_action_list, starting_layer_ref, symbol_index, sy
     return current_ref;
 }
 
-function format_text(input_string, italics_strings, flavour_index, is_centred) {
+function format_text(layer, input_string, italics_strings, flavour_index, is_centred) {
     /**
      * Inserts the given string into the active layer and formats it according to function parameters with symbols 
      * from the NDPMTG font.
+     * @param {layer} layer The TextLayer you want to format
      * @param {str} input_string The string to insert into the active layer
      * @param {Array[str]} italic_strings An array containing strings that are present in the main input string and should be italicised
      * @param {int} flavour_index The index at which linebreak spacing should be increased and any subsequent chars should be italicised (where the card's flavour text begins)
      * @param {boolean} is_centred Whether or not the input text should be centre-justified
      */
+    
+    app.activeDocument.activeLayer = layer;
+    // need to set fontSize to avoid scaling up by 16.67px
+    
+    var myFontSize = layer.textItem.size;
+    var myFontScalar = getFontResolutionScalar();
+
+    // log(myFontSize);
+    // log(myFontScalar);
+    
+    myFontSize *= myFontScalar;
+    
+    // log(myFontSize);
+
 
     // record the layer's justification before modifying the layer in case it's reset along the way
     var layer_justification = app.activeDocument.activeLayer.textItem.justification;
@@ -222,8 +237,10 @@ function format_text(input_string, italics_strings, flavour_index, is_centred) {
     var italics_indices = locate_italics(input_string, italics_strings);
 
     // Prepare action descriptor and reference variables
-    var layer_font_size = app.activeDocument.activeLayer.textItem.size;
+    // var layer_font_size = app.activeDocument.activeLayer.textItem.size;
+    var layer_font_size = myFontSize;
     var layer_text_colour = app.activeDocument.activeLayer.textItem.color;
+    
     var desc119 = new ActionDescriptor();
     idnull = charIDToTypeID("null");
     var ref101 = new ActionReference();
@@ -509,4 +526,8 @@ function format_text_wrapper() {
     var card_text = app.activeDocument.activeLayer.textItem.contents;
     var italic_text = generate_italics(card_text);
     format_text(card_text, italic_text, -1, false);
+}
+
+function getFontResolutionScalar() {
+    return 72 / app.activeDocument.resolution;
 }

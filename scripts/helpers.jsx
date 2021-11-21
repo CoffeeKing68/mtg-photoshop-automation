@@ -77,7 +77,7 @@ function align(align_type, layer) {
      * Align the currently active layer with respect to the current selection, either vertically or horizontally.
      * Intended to be used with align_vertical() or align_horizontal().
      */
-    
+
     if (layer) {
         var activeLayer = app.activeDocument.activeLayer;
         app.activeDocument.activeLayer = layer;
@@ -97,7 +97,7 @@ function align(align_type, layer) {
     var idAdCH = charIDToTypeID(align_type);  // align type - "AdCV" for vertical, "AdCH" for horizontal
     desc.putEnumerated(idUsng, idADSt, idAdCH);
     executeAction(idAlgn, desc, DialogModes.NO);
-    
+
     if (layer) {
         app.activeDocument.activeLayer = activeLayer;
     }
@@ -133,7 +133,7 @@ function frame_layer(layer, reference_layer) {
     layer.resize(scale_factor, scale_factor, AnchorPosition.TOPLEFT);
 
     select_layer_pixels(reference_layer);
-    
+
     align_horizontal(layer);
     align_vertical(layer);
     clear_selection();
@@ -440,4 +440,11 @@ function insert_scryfall_scan(image_url, file_path) {
 
     var scryfall_scan = retrieve_scryfall_scan(image_url, file_path);
     return paste_file_into_new_layer(scryfall_scan);
+}
+
+function revertDocument() {
+    if (app.activeDocument.activeHistoryState) {
+        var idRvrt = charIDToTypeID("Rvrt");
+        executeAction(idRvrt, undefined, DialogModes.NO);
+    }
 }

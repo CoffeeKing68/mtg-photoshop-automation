@@ -76,6 +76,9 @@ def main():
 
         subprocess.call(command)
     elif system == "Windows":
+        # need to double up the backslashes for windows
+        js = str(js).replace("\\", "\\\\")
+
         vbsScriptCode =f"""
         'PsJavaScriptExecutionMode Enums
         Const psNeverShowDebugger = 1, psDebuggerOnError = 2, psBeforeRunning = 3

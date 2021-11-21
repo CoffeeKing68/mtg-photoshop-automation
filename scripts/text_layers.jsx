@@ -68,12 +68,11 @@ function vertically_align_text(layer, reference_layer) {
     raster_layer.move(layer, ElementPlacement.PLACEBEFORE);
     raster_layer.rasterize(RasterizeType.TEXTCONTENTS);
 
-    layer.visible = false;
-
     select_layer_pixels(reference_layer);
-    app.activeDocument.activeLayer = raster_layer;
-    align_vertical(layer);
+    align_vertical(raster_layer);
     clear_selection();
+    
+    layer.visible = false;
 }
 
 function vertically_nudge_creature_text(layer, reference_layer, top_reference_layer) {
@@ -139,9 +138,6 @@ var TextField = Class({
     },
     execute: function () {
         this.layer.visible = true;
-
-
-
         this.layer.textItem.contents = this.text_contents;
         this.layer.textItem.color = this.text_colour;
     }
@@ -210,9 +206,9 @@ var BasicFormattedTextField = Class({
         this.super();
 
         // format text function call
-        app.activeDocument.activeLayer = this.layer;
+        // app.activeDocument.activeLayer = this.layer;
         var italic_text = generate_italics(this.text_contents);
-        format_text(this.text_contents, italic_text, -1, false);
+        format_text(this.layer, this.text_contents, italic_text, -1, false);
     }
 });
 
@@ -234,7 +230,10 @@ var FormattedTextField = Class({
         this.is_centred = is_centred;
     },
     execute: function () {
+        // log("Textfield.execute");
+        // log(layer.textItem.size);
         this.super();
+        // log(layer.textItem.size);
 
         // generate italic text arrays from things in (parentheses), ability words, and the given flavour text
         var italic_text = generate_italics(this.text_contents);
@@ -257,9 +256,13 @@ var FormattedTextField = Class({
             }
             flavour_index = this.text_contents.length;
         }
+        // log("Textfield.format_text");
+        // log(layer.textItem.size);
 
-        app.activeDocument.activeLayer = this.layer;
-        format_text(this.text_contents + "\r" + this.flavour_text, italic_text, flavour_index, this.is_centred);
+        // app.activeDocument.activeLayer = this.layer;
+        format_text(this.layer, this.text_contents + "\r" + this.flavour_text, italic_text, flavour_index, this.is_centred);
+
+        // log(layer.textItem.size);
         if (this.is_centred) {
             this.layer.textItem.justification = Justification.CENTER;
         }
@@ -275,15 +278,25 @@ var FormattedTextArea = Class({
 
     extends_: FormattedTextField,
     constructor: function (layer, text_contents, text_colour, flavour_text, is_centred, reference_layer) {
+        // log("constructor");
+        // log(layer.textItem.size);
+        this.super(layer, text_contents, text_colour, flavour_text, is_centred);
+        // log(layer.textItem.size);
         this.super(layer, text_contents, text_colour, flavour_text, is_centred);
         this.reference_layer = reference_layer;
     },
     execute: function () {
+        // log("FormattedTextField.excute");
+        // log(this.layer.textItem.size);
         this.super();
+        // log(this.layer.textItem.size);
 
         if (this.text_contents !== "" || this.flavour_text !== "") {
             // resize the text until it fits into the reference layer
+            // log(this.layer);
+            // log(this.layer.textItem.size);
             scale_text_to_fit_reference(this.layer, this.reference_layer);
+            // log(this.layer.textItem.size);
 
             // rasterise and centre vertically
             vertically_align_text(this.layer, this.reference_layer);
