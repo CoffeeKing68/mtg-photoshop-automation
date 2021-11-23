@@ -12,9 +12,18 @@ var MACOS = File.fs == "Macintosh";
 var filePath = File($.fileName).parent.parent.fsName;
 
 function main2() {
-    card = { "artist": "Adam Paquette", "layout": "normal", "name": "Ancient Tomb", "text": "{T}: Add {C}{C}. Ancient Tomb deals 2 damage to you.", "power": null, "toughness": null, "type": "Land", "types": null, "rarity": "mythic", "card_faces": null, "flavor_name": null, "printed_name": null, "number": "21", "original_text": "{T}: Add {C}{C}. Ancient Tomb deals 2 damage to you.", "original_type": "Land", "set": "ZNE", "flavor": null, "image_location": null, "count": 30 };
+    var decklistNames = ["BRAN"];
+    
+    for (var i = 0; i < decklistNames.length; i ++ ) {
+        var decklistPath = filePath + "/decklists/" + decklistNames[i] + ".json";
+        var deckJson = loadJson(decklistPath);
+        
+        for (cardIndex = 0; cardIndex < deckJson.length; cardIndex ++ ) {
+            var card = deckJson[cardIndex];
 
-    exportCard(card);
+            exportCard(card);
+        }
+    }
 }
 
 function exportCard(card) {
@@ -47,8 +56,11 @@ function exportCard(card) {
     // select and execute the template - insert text fields, set visibility of layers, etc. - and save to disk
     var artFile = new File(card.image_location);
 
+    // overrides
+    var templateClass = getTemplateClass(card, artFile);
+
     // layout, ArtFileObj, relativePath
-    var template = new WomensDayTemplate(layout, artFile, templateLocation);
+    var template = new templateClass(layout, artFile, templateLocation);
 
     template.execute();
 
@@ -81,3 +93,129 @@ function loadJson(jsonPath) {
     return JSON.parse(json);
 }
 
+function buildTemplateMap() {
+    var class_template_map = {};
+    class_template_map[normal_class] = {
+        default_: NormalTemplate,
+        other: [
+            NormalClassicTemplate,
+            NormalExtendedTemplate,
+            WomensDayTemplate,
+            StargazingTemplate,
+            MasterpieceTemplate,
+            ExpeditionTemplate,
+        ],
+    };
+    class_template_map[transform_front_class] = {
+        default_: TransformFrontTemplate,
+        other: [],
+    };
+    class_template_map[transform_back_class] = {
+        default_: TransformBackTemplate,
+        other: [],
+    };
+    class_template_map[ixalan_class] = {
+        default_: IxalanTemplate,
+        other: [],
+    };
+    class_template_map[mdfc_front_class] = {
+        default_: MDFCFrontTemplate,
+        other: [],
+    };
+    class_template_map[mdfc_back_class] = {
+        default_: MDFCBackTemplate,
+        other: [],
+    };
+    class_template_map[mutate_class] = {
+        default_: MutateTemplate,
+        other: [],
+    };
+    class_template_map[adventure_class] = {
+        default_: AdventureTemplate,
+        other: [],
+    };
+    class_template_map[leveler_class] = {
+        default_: LevelerTemplate,
+        other: [],
+    };
+    class_template_map[saga_class] = {
+        default_: SagaTemplate,
+        other: [],
+    };
+    class_template_map[miracle_class] = {
+        default_: MiracleTemplate,
+        other: [],
+    };
+    class_template_map[planeswalker_class] = {
+        default_: PlaneswalkerTemplate,
+        other: [
+            PlaneswalkerExtendedTemplate,
+        ],
+    };
+    class_template_map[snow_class] = {
+        default_: SnowTemplate,
+        other: [],
+    };
+    class_template_map[basic_class] = {
+        default_: BasicLandTemplate,
+        other: [
+            BasicLandClassicTemplate,
+            BasicLandTherosTemplate,
+            BasicLandUnstableTemplate,
+        ],
+    };
+    class_template_map[planar_class] = {
+        default_: PlanarTemplate,
+        other: [],
+    };
+
+    return class_template_map;
+}
+
+// function getArtSize(artFile) {
+//     if (artFile) {
+//         log(artFile.name);
+//         exit();
+//     } else return false;
+// }
+
+function getTemplateClass(card, artFile) {
+    var templateMap = buildTemplateMap();
+    var artSize = card.art_size;
+
+    if (layout.card_class == basic_class) {
+        templateClass = BasicLandTherosTemplate;
+    } else if (layout.card_class == planeswalker_class) {
+        templateClass = PlaneswalkerExtendedTemplate;
+    } else if (layout.card_class == normal_class) {
+        // set specific
+        if (card.type.indexOf('Legendary') >= 0 && card.type.indexOf('Enchantment') >= 0 &&
+            card.type.indexOf('Creature') >= 0 && card.type.indexOf('God') >= 0 &&
+            artSize == "fullart" && card.is_personal == false) {
+            // StargazingTemplate => (theros god enchantment, fullart)
+            templateClass = StargazingTemplate;
+        } else if (in_array(["ZEN", "WWK", "ROE", "BFZ", "OGW", "ZNR", "EXP"], card.set) &&
+            artSize == "fullart" && card.type.indexOf('Land') >= 0) {
+            // ExpeditionTemplate => (zendikar landa and fullart)
+            templateClass = ExpeditionTemplate;
+        } else if (in_array(["MPS"], card.set) && artSize == "fullart") {
+            // MasterpieceTemplate => (mps and fullart)
+            templateClass = MasterpieceTemplate;
+        } else {
+            // not set specific
+            if (artSize == "fullart") {
+                templateClass = WomensDayTemplate;
+            } else if (artSize == "extended") {
+                templateClass = NormalExtendedTemplate;
+            } else {
+                templateClass = NormalTemplate;
+                // NormalClassicTemplate => 
+            }
+        }
+    } else {
+        // basic mapping
+        templateClass = templateMap[layout.card_class];
+    }
+    
+    return templateClass;
+}
