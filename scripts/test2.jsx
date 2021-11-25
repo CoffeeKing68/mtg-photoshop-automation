@@ -11,6 +11,8 @@ var MACOS = File.fs == "Macintosh";
 #include "../settings.jsx";
 #include "logging.jsx";
 
+#include "frame_logic_tests.jsx";
+
 var filePath = File($.fileName).parent.parent.fsName;
 
 function main2() {
@@ -82,21 +84,12 @@ function main() {
     makeLogFile();
 
     try {
-        main2();
+        runAllFrameLogicTests();
     } catch (error) {
         log("Error occurred");
         log(error.message);
         log(error.fileName + ":" + error.line);
     }
-}
-
-function loadJson(jsonPath) {
-    var jsonFile = new File(jsonPath);
-    jsonFile.open('r');
-    var json = jsonFile.read();
-    jsonFile.close();
-
-    return JSON.parse(json);
 }
 
 function buildTemplateMap() {

@@ -65,11 +65,15 @@ def get_args():
 
 
 def main():
+    keyboardInterruptHackFilePath = 'temp/photoshopIntertupt'
+
+    try:
+        os.remove(keyboardInterruptHackFilePath);
+    except OSError:
+        pass
+
     ps, js, templateLocation = get_args()
     
-    # print(templateLocation)
-    # exit()
-
     system = platform.system()
     if system == "Darwin":  # MacOS
         # Applescript is so silly, have to do it like this so it doesn't complain
@@ -85,8 +89,6 @@ def main():
         for line in applescript_string.splitlines():
             command.append("-e")
             command.append(line.strip())
-
-        subprocess.call(command)
     elif system == "Windows":
         # need to double up the backslashes for windows
         js = str(js).replace("\\", "\\\\")
@@ -106,11 +108,18 @@ def main():
             f.write(vbsScriptCode)
 
         command = ["cscript", vbsScriptFileName]
-        subprocess.call(command)
-
     elif system == "Linux":
         pass
-    
+
+
+    try:
+        subprocess.call(command)
+    except KeyboardInterrupt as e:
+        print('KeyboardInterrupt')
+
+        with open(keyboardInterruptHackFilePath, 'w'):
+            pass
+        
     print(">" * 30 + "\n")
     with open("logs/log.log", "r") as f:
         print(f.read())

@@ -1,3 +1,5 @@
+var filePath = File($.fileName).parent.parent.fsName;
+
 function rgb_black() {
     /**
      * Creates and returns a SolidColour with RGB values for solid black.
@@ -43,7 +45,7 @@ function compute_text_layer_dimensions(layer) {
     layer_copy.rasterize(RasterizeType.TEXTCONTENTS);
     var dimensions = compute_layer_dimensions(layer_copy);
     layer_copy.remove();
-    
+
     return dimensions;
 }
 
@@ -745,5 +747,25 @@ function testRemoveDicretics() {
         if (expected != actual) {
             allPassed = false;
         }
+    }
+}
+
+function loadJson(jsonPath) {
+    var jsonFile = new File(jsonPath);
+    jsonFile.open('r');
+    var json = jsonFile.read();
+    jsonFile.close();
+
+    return JSON.parse(json);
+}
+
+function fileExists(filePath) {
+    return (new File(filePath)).exists;
+}
+
+function exitOnKeyboardInterrupt() {
+    if (fileExists(filePath + "/temp/photoshopIntertupt")) {
+        log("KeyboardInterrupt detected");
+        exit();
     }
 }

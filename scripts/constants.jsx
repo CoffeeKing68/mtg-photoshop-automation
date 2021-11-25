@@ -1,3 +1,5 @@
+var filePath = File($.fileName).parent.parent.fsName;
+
 // TODO: consistency between camelcase and snakecase
 
 var RASTER_DUPLICATE_SUFFIX = "_RASTER_DUPLICATE";

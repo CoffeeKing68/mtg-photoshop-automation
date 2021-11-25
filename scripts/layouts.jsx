@@ -28,7 +28,7 @@ var BaseLayout = Class({
         this.unpack_scryfall();
         this.set_card_class();
 
-        var ret = select_frame_layers(this.mana_cost, this.type_line, this.oracle_text, this.colour_identity);
+        var ret = select_frame_layers(scryfall, this.mana_cost, this.type_line, this.oracle_text, this.colour_identity);
 
         this.twins = ret.twins;
         this.pinlines = ret.pinlines;
@@ -198,6 +198,7 @@ var ModalDoubleFacedLayout = Class({
 
         // mdfc banner things
         this.other_face_twins = select_frame_layers(
+            this.scryfall,
             this.scryfall.card_faces[this.other_face].mana_cost,
             this.scryfall.card_faces[this.other_face].type_line,
             this.scryfall.card_faces[this.other_face].oracle_text,

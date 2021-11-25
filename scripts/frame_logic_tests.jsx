@@ -2,8 +2,10 @@
 #include "render.jsx";
 #include "constants.jsx";
 #include "frame_logic.jsx";
+#include "helpers.jsx";
+#include "logging.jsx";
 
-var file_path = File($.fileName).parent.parent.fsName;
+var filePath = File($.fileName).parent.parent.fsName;
 
 /* Test cases */
 // Frame array: [background, pinlines, twins, is_nyx, is_colourless]
@@ -201,7 +203,7 @@ const test_cases = {
     "Sacred Foundry": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.RW, LayerNames.LAND, false, false] },
 
     // Onslaught/Zendikar fetchlands
-    "Flooded Stand": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.WU, LayerNames.LAND, false, false] },
+    "Flooded Strand": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.WU, LayerNames.LAND, false, false] },
     "Polluted Delta": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.UB, LayerNames.LAND, false, false] },
     "Bloodstained Mire": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.BR, LayerNames.LAND, false, false] },
     "Wooded Foothills": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.RG, LayerNames.LAND, false, false] },
@@ -237,14 +239,15 @@ const test_cases = {
     "Mana Confluence": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.GOLD, LayerNames.GOLD, false, false] },
     "Ally Encampment": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.GOLD, LayerNames.GOLD, false, false] },
     "Command Tower": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.GOLD, LayerNames.GOLD, false, false] },
+    "Reflecting Pool": { layout: NormalLayout, frame: [LayerNames.LAND, LayerNames.GOLD, LayerNames.GOLD, false, false] },
 };
 
 function layout_to_list(layout) {
     return [layout.background, layout.pinlines, layout.twins, layout.is_nyx, layout.is_colourless];
 }
 
-function test_logic(card_name, expected_layers) {
-    var scryfall = call_python(card_name, file_path);
+function test_logic(scryfall, card_name, expected_layers) {
+    // var scryfall = call_python(card_name, file_path);
 
     // Function call
     var layout = new expected_layers.layout(scryfall, card_name);
@@ -254,7 +257,6 @@ function test_logic(card_name, expected_layers) {
     if (layers.length != expected_layers.frame.length) return [false, layers];
     for (var i = 0; i < layers.length; i++) {
         if (layers[i] != expected_layers.frame[i]) {
-
             return [false, layers];
         }
     }
@@ -262,24 +264,31 @@ function test_logic(card_name, expected_layers) {
 }
 
 /* Test suite entry point */
+function runAllFrameLogicTests() {
+    log("Starting testing:");
 
-var log_file = new File(file_path + "/scripts/test.log");
-log_file.open(LayerNames.WHITE);
-log_file.write("Starting testing:\n");
-var result;
-var test_counter = 1;
-for (var test_case in test_cases) {
-    // Test the current test case
-    log_file.write("[Test " + test_counter.toString() + "] " + test_case + ": ")
-    result = test_logic(test_case, test_cases[test_case]);
-    if (result[0]) {
-        log_file.write("PASSED")
+    var result;
+    var test_counter = 1;
+
+    var scryfallTestObj = loadJson(filePath + "/frame_logic_test_data.json");
+
+    for (var test_case in test_cases) {
+        exitOnKeyboardInterrupt();
+
+        // Test the current test case
+        log("[Test " + test_counter.toString() + "] " + test_case + ":");
+
+        result = test_logic(scryfallTestObj[test_case], test_case, test_cases[test_case]);
+
+        if (result[0]) {
+            log("PASSED");
+        }
+        else {
+            log("FAILED: " + test_case + " - expected [" + test_cases[test_case].frame + "], returned [" + result[1] + "]");
+            exit();
+        }
+
+        test_counter++;
     }
-    else {
-        log_file.write("FAILED: " + test_case + " - expected [" + test_cases[test_case].frame + "], returned [" + result[1] + "]");
-    }
-    log_file.write("\n");
-    test_counter++;
+    log("Finished testing.");
 }
-log_file.write("Finished testing.");
-log_file.close();

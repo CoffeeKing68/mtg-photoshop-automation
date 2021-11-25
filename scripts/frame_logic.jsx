@@ -9,13 +9,23 @@ function fix_colour_pair(input) {
     }
 }
 
-function select_frame_layers(mana_cost, type_line, oracle_text, colour_identity_array) {
+function select_frame_layers(scryfall, mana_cost, type_line, oracle_text, colour_identity_array) {
     const colours = [LayerNames.WHITE, LayerNames.BLUE, LayerNames.BLACK, LayerNames.RED, LayerNames.GREEN];
     const basic_colours = { "Plains": LayerNames.WHITE, "Island": LayerNames.BLUE, "Swamp": LayerNames.BLACK, "Mountain": LayerNames.RED, "Forest": LayerNames.GREEN };
     const hybrid_symbols = ["W/U", "U/B", "B/R", "R/G", "G/W", "W/B", "B/G", "G/U", "U/R", "R/W"];
 
     // Declare output variables
     var background; var pinlines; var twins;
+
+    // hack overrides, can use produced_mana to determine which colors the frame should be
+    if (scryfall.name == "Reflecting Pool") {
+        return {
+            background: LayerNames.LAND,
+            pinlines: LayerNames.GOLD,
+            twins: LayerNames.GOLD,
+            is_colourless: false,
+        };
+    }
 
     if (type_line.indexOf(LayerNames.LAND) >= 0) {
         // Land card
@@ -114,6 +124,7 @@ function select_frame_layers(mana_cost, type_line, oracle_text, colour_identity_
                     }
                 }
             }
+
 
             // Check if the line adds one mana of any colour
             if ((line.toLowerCase().indexOf("add") >= 0 && line.indexOf("mana") >= 0)

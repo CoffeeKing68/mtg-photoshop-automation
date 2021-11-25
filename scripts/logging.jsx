@@ -1,10 +1,13 @@
+#include "constants.jsx";
+
 function makeLogFile() {
     // make logfile
     var logFolder = new Folder(filePath + "/logs");
     logFolder.create();
 
     var logFile = new File(filePath + "/logs/" + "log.log");
-    logFile.open("w", "TEXT");
+    // keke
+    logFile.open(LayerNames.WHITE, "TEXT");
     logFile.close();
 }
 
