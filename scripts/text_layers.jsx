@@ -6,11 +6,12 @@
 
 function scale_text_right_overlap(layer, reference_layer) {
     /**
-     * Scales a text layer down (in 0.2 pt increments) until its right bound has a 24 px clearance from a reference
+     * Scales a text layer down (in 1 px increments) until its right bound has a 24 px clearance from a reference
      * layer's left bound.
      */
+    var fontScalar = getFontResolutionScalar();
 
-    var step_size = new UnitValue(0.2, "pt");
+    var step_size = new UnitValue(1, "px");
     var reference_left_bound = reference_layer.bounds[0].as("px");
     var layer_left_bound = layer.bounds[0].as("px");
     var layer_right_bound = layer.bounds[2].as("px");
@@ -21,7 +22,7 @@ function scale_text_right_overlap(layer, reference_layer) {
     var layer_font_size = layer.textItem.size;  // returns unit value
     while (layer_right_bound > reference_left_bound - 24) {  // minimum 24 px gap
         layer_font_size = layer_font_size - step_size;
-        layer.textItem.size = layer_font_size;
+        layer.textItem.size = layer_font_size * fontScalar;
         layer_right_bound = layer.bounds[2].as("px");
     }
 }
@@ -33,7 +34,7 @@ function scale_text_to_fit_reference(layer, reference_layer) {
     */
 
     var starting_font_size = layer.textItem.size;
-    var step_size = new UnitValue(0.25, "pt");
+    var step_size = new UnitValue(4, "px");
 
     // Reduce the reference height by 64 pixels to avoid text landing on the top/bottom bevels
     var reference_height = compute_layer_dimensions(reference_layer).height - 64;
@@ -42,44 +43,93 @@ function scale_text_to_fit_reference(layer, reference_layer) {
     var font_size = starting_font_size;
     var scaled = false;
 
-    var layer_height = compute_text_layer_dimensions(layer).height;
+    // log("scale_text_to_fit_reference");
+    // log(starting_font_size);
+    // log(layer);
+    // log(layer.textItem.contents);
+    // log(layer.bounds);
+
+    var dimensions = compute_text_layer_dimensions(layer);
+
+    // logObj(dimensions);
+    // log(dimensions['height']);
+    // log(dimensions.height);
+
+    // logObj(compute_layer_dimensions(layer));
+
+    var layer_height = dimensions.height;
+    // log("layerHeight");
+    // log(layer_height);
+
+    // exit();
+
+    var fontScalar = getFontResolutionScalar();
+
+    // log(fontScalar);
 
     while (reference_height < layer_height) {
+        // log(font_size);
+        // log(step_size);
+
         scaled = true;
         // step down font and lead sizes by the step size, and update those sizes in the layer
         font_size = font_size - step_size;
-        layer.textItem.size = font_size;
+
+        // log(font_size);
+
+        // log(font_size);
+
+        // log(font_size * fontScalar);
+        // log(150 * 0.06);
+        // log(font_size * 0.06);
+
+        layer.textItem.size = font_size * fontScalar;
         layer.textItem.leading = font_size;
+
+        // log(layer.textItem.size);
+        // exit();
+
         layer_height = compute_text_layer_dimensions(layer).height;
     }
+
+    // exit();
 
     return scaled;
 }
 
-// TODO: multiple layers, each with their own references, that scale down together until they all fit within their references
+function getRasterizedLayerName(layer) {
+    return layer.name + RASTER_DUPLICATE_SUFFIX;
+}
 
+function getRasterizedLayer(layer) {
+    return app.activeDocument.layers.getByName(getRasterizedLayerName(layer));
+}
+
+// TODO: multiple layers, each with their own references, that scale down together until they all fit within their references
 function vertically_align_text(layer, reference_layer) {
     /**
      * Rasterises a given text layer and centres it vertically with respect to the bounding box of a reference layer.
      */
 
     var raster_layer = layer.duplicate(app.activeDocument, ElementPlacement.INSIDE);
-    raster_layer.name = layer.name + RASTER_DUPLICATE_SUFFIX;
+    raster_layer.name = getRasterizedLayerName(layer);
     raster_layer.move(layer, ElementPlacement.PLACEBEFORE);
     raster_layer.rasterize(RasterizeType.TEXTCONTENTS);
 
     select_layer_pixels(reference_layer);
     align_vertical(raster_layer);
     clear_selection();
-    
+
     layer.visible = false;
+    
+    return raster_layer;
 }
 
 function vertically_nudge_creature_text(layer, reference_layer, top_reference_layer) {
     /**
      * Vertically nudge a creature's text layer if it overlaps with the power/toughness box, determined by the given reference layers.
      */
-
+    
     // if the layer needs to be nudged
     if (layer.bounds[2].as("px") >= reference_layer.bounds[0].as("px")) {
         select_layer_pixels(reference_layer);
@@ -208,7 +258,7 @@ var BasicFormattedTextField = Class({
         // format text function call
         // app.activeDocument.activeLayer = this.layer;
         var italic_text = generate_italics(this.text_contents);
-        format_text(this.layer, this.text_contents, italic_text, -1, false);
+        format_text(this.layer, this.text_contents, italic_text, -1, false, this.text_colour);
     }
 });
 
@@ -255,6 +305,16 @@ var FormattedTextField = Class({
                 italic_text.push(this.flavour_text);
             }
             flavour_index = this.text_contents.length;
+
+            // app.activeDocument.activeLayer = this.layer;
+            // log(this.layer.textItem.contents);
+            // this.layer.textItem.contents = this.text_contents + "\r" + this.flavour_text;
+
+            // exit();
+
+
+            // log(this.layer.textItem.contents);
+            // exit();
         }
         // log("Textfield.format_text");
         // log(layer.textItem.size);
@@ -278,10 +338,6 @@ var FormattedTextArea = Class({
 
     extends_: FormattedTextField,
     constructor: function (layer, text_contents, text_colour, flavour_text, is_centred, reference_layer) {
-        // log("constructor");
-        // log(layer.textItem.size);
-        this.super(layer, text_contents, text_colour, flavour_text, is_centred);
-        // log(layer.textItem.size);
         this.super(layer, text_contents, text_colour, flavour_text, is_centred);
         this.reference_layer = reference_layer;
     },
@@ -299,7 +355,7 @@ var FormattedTextArea = Class({
             // log(this.layer.textItem.size);
 
             // rasterise and centre vertically
-            vertically_align_text(this.layer, this.reference_layer);
+            this.rasterLayer = vertically_align_text(this.layer, this.reference_layer);
 
             if (this.is_centred) {
                 // ensure the layer is centred horizontally as well
@@ -328,6 +384,7 @@ var CreatureFormattedTextArea = Class({
         this.super();
 
         // shift vertically if the text overlaps the PT box
-        vertically_nudge_creature_text(this.layer, this.pt_reference_layer, this.pt_top_reference_layer);
+        // var rasterizedLayer = getRasterizedLayer(this.layer);
+        vertically_nudge_creature_text(this.rasterLayer, this.pt_reference_layer, this.pt_top_reference_layer);
     }
 })

@@ -96,8 +96,8 @@ var NormalLayout = Class({
         this.type_line = this.scryfall.type_line;
         this.oracle_text = this.scryfall.oracle_text.replace(/\u2212/g, "-");  // for planeswalkers
         this.flavour_text = "";
-        if (this.scryfall.flavor_text !== undefined) {
-            this.flavour_text = this.scryfall.flavor_text;
+        if (this.scryfall.flavour_text !== undefined) {
+            this.flavour_text = this.scryfall.flavour_text;
         }
         this.power = this.scryfall.power;
         this.toughness = this.scryfall.toughness;

@@ -199,30 +199,19 @@ function format_text(layer, input_string, italics_strings, flavour_index, is_cen
     /**
      * Inserts the given string into the active layer and formats it according to function parameters with symbols 
      * from the NDPMTG font.
-     * @param {layer} layer The TextLayer you want to format
      * @param {str} input_string The string to insert into the active layer
      * @param {Array[str]} italic_strings An array containing strings that are present in the main input string and should be italicised
      * @param {int} flavour_index The index at which linebreak spacing should be increased and any subsequent chars should be italicised (where the card's flavour text begins)
      * @param {boolean} is_centred Whether or not the input text should be centre-justified
      */
-    
-    app.activeDocument.activeLayer = layer;
-    // need to set fontSize to avoid scaling up by 16.67px
-    
-    var myFontSize = layer.textItem.size;
-    var myFontScalar = getFontResolutionScalar();
-
-    // log(myFontSize);
-    // log(myFontScalar);
-    
-    // make sure in your photoshop settings, your units are pixels.
-    myFontSize *= myFontScalar;
-    
-    // log(myFontSize);
-
 
     // record the layer's justification before modifying the layer in case it's reset along the way
-    var layer_justification = app.activeDocument.activeLayer.textItem.justification;
+    app.activeDocument.activeLayer = layer;
+    var layer_justification = layer.textItem.justification;
+
+    var myFontSize = layer.textItem.size;
+    var myFontScalar = getFontResolutionScalar();
+    myFontSize *= myFontScalar;
 
     // TODO: check that the active layer is a text layer, and raise an issue if not
     if (flavour_index > 0) {
@@ -238,10 +227,11 @@ function format_text(layer, input_string, italics_strings, flavour_index, is_cen
     var italics_indices = locate_italics(input_string, italics_strings);
 
     // Prepare action descriptor and reference variables
-    // var layer_font_size = app.activeDocument.activeLayer.textItem.size;
+    var font
+
     var layer_font_size = myFontSize;
-    var layer_text_colour = app.activeDocument.activeLayer.textItem.color;
-    
+    var layer_text_colour = layer.textItem.color;
+
     var desc119 = new ActionDescriptor();
     idnull = charIDToTypeID("null");
     var ref101 = new ActionReference();
@@ -311,6 +301,16 @@ function format_text(layer, input_string, italics_strings, flavour_index, is_cen
         idLdng = charIDToTypeID("Ldng");
         idPnt = charIDToTypeID("#Pnt");
         desc126.putUnitDouble(idLdng, idPnt, layer_font_size);
+        idClr = charIDToTypeID("Clr ");
+        desc127 = new ActionDescriptor();
+        idRd = charIDToTypeID("Rd  ");
+        desc127.putDouble(idRd, text_colour.rgb.red);  // text colour.red
+        idGrn = charIDToTypeID("Grn ");
+        desc127.putDouble(idGrn, text_colour.rgb.green);  // text colour.green
+        idBl = charIDToTypeID("Bl  ");
+        desc127.putDouble(idBl, text_colour.rgb.blue);  // text colour.blue
+        idRGBC = charIDToTypeID("RGBC");
+        desc126.putObject(idClr, idRGBC, desc127);
         idTxtS = charIDToTypeID("TxtS");
         desc125.putObject(idTxtS, idTxtS, desc126);
         current_layer_ref = desc125;
@@ -489,6 +489,333 @@ function format_text(layer, input_string, italics_strings, flavour_index, is_cen
     // Reset layer's justification and disable hypenation
     app.activeDocument.activeLayer.textItem.justification = layer_justification;
     app.activeDocument.activeLayer.textItem.hyphenation = false;
+}
+
+function format_text_old(layer, input_string, italics_strings, flavour_index, is_centred, layer_text_colour) {
+    /**
+     * Inserts the given string into the active layer and formats it according to function parameters with symbols 
+     * from the NDPMTG font.
+     * @param {layer} layer The TextLayer you want to format
+     * @param {str} input_string The string to insert into the active layer
+     * @param {Array[str]} italic_strings An array containing strings that are present in the main input string and should be italicised
+     * @param {int} flavour_index The index at which linebreak spacing should be increased and any subsequent chars should be italicised (where the card's flavour text begins)
+     * @param {boolean} is_centred Whether or not the input text should be centre-justified
+     */
+
+    app.activeDocument.activeLayer = layer;
+
+    // need to set fontSize to avoid scaling up by 16.67px
+    var myFontSize = layer.textItem.size;
+    var myFontScalar = getFontResolutionScalar();
+
+    // log(myFontSize);
+    // log(myFontScalar);
+
+    // make sure in your photoshop settings, your units are pixels.
+    myFontSize *= myFontScalar;
+
+    // log(myFontSize);
+
+    // record the layer's justification before modifying the layer in case it's reset along the way
+    var layer_justification = app.activeDocument.activeLayer.textItem.justification;
+
+    // TODO: check that the active layer is a text layer, and raise an issue if not
+    if (flavour_index > 0) {
+        var quote_index = input_string.indexOf("\r", flavour_index + 3);
+    }
+
+    // Locate symbols and update the input string
+    var ret = locate_symbols(input_string);
+    input_string = ret.input_string;
+    var symbol_indices = ret.symbol_indices;
+
+    // Locate italics text indices
+    var italics_indices = locate_italics(input_string, italics_strings);
+
+    // Prepare action descriptor and reference variables
+    // var layer_font_size = app.activeDocument.activeLayer.textItem.size;
+    var layer_font_size = myFontSize;
+    if (layer_text_colour === undefined) {
+        layer_text_colour = layer.textItem.color;
+    }
+
+    // layer.textItem.contents = "";
+    // layer.textItem.color = layer_text_colour;
+    // layer.textItem.contents = input_string;
+
+    // log("format_text");
+
+    // logObj(layer.textItem.color.rgb);
+    // log(layer.textItem.contents);
+
+    // log(layer.name);
+
+    var desc119 = new ActionDescriptor();
+    idnull = charIDToTypeID("null");
+    var ref101 = new ActionReference();
+    var idTxLr = charIDToTypeID("TxLr");
+    var idOrdn = charIDToTypeID("Ordn");
+    var idTrgt = charIDToTypeID("Trgt");
+    ref101.putEnumerated(idTxLr, idOrdn, idTrgt);
+    desc119.putReference(idnull, ref101);
+    var primary_action_descriptor = new ActionDescriptor();
+    var idTxt = charIDToTypeID("Txt ");
+    primary_action_descriptor.putString(idTxt, input_string);
+    var primary_action_list = new ActionList();
+    desc25 = new ActionDescriptor();
+    var idFrom = charIDToTypeID("From");
+    desc25.putInteger(idFrom, 0);
+    var idT = charIDToTypeID("T   ");
+    desc25.putInteger(idT, input_string.length);
+    desc26 = new ActionDescriptor();
+    var idfontPostScriptName = stringIDToTypeID("fontPostScriptName");
+    desc26.putString(idfontPostScriptName, font_name_mplantin);  // MPlantin font name
+    var idFntN = charIDToTypeID("FntN");
+    desc26.putString(idFntN, font_name_mplantin);  // MPlantin font name
+    var idSz = charIDToTypeID("Sz  ");
+    var idPnt = charIDToTypeID("#Pnt");
+    desc26.putUnitDouble(idSz, idPnt, layer_font_size);
+    var idClr = charIDToTypeID("Clr ");
+    desc27 = new ActionDescriptor();
+    var idRd = charIDToTypeID("Rd  ");
+    desc27.putDouble(idRd, layer_text_colour.rgb.red);  // text colour.red
+    var idGrn = charIDToTypeID("Grn ");
+    desc27.putDouble(idGrn, layer_text_colour.rgb.green);  // text colour.green
+    var idBl = charIDToTypeID("Bl  ");
+    desc27.putDouble(idBl, layer_text_colour.rgb.blue);  // text colour.blue
+    var idRGBC = charIDToTypeID("RGBC");
+    desc26.putObject(idClr, idRGBC, desc27);
+    var idHrzS = charIDToTypeID("HrzS");
+    var idautoLeading = stringIDToTypeID("autoLeading");
+    desc26.putBoolean(idautoLeading, false);
+    var idLdng = charIDToTypeID("Ldng");
+    idPnt = charIDToTypeID("#Pnt");
+    desc26.putUnitDouble(idLdng, idPnt, layer_font_size);
+    idTxtS = charIDToTypeID("TxtS");
+    desc25.putObject(idTxtS, idTxtS, desc26);
+    var current_layer_ref = desc25;
+
+    if (false) {
+        for (i = 0; i < italics_indices.length; i++) {
+            // Italics text
+            var idTxtt = charIDToTypeID("Txtt");
+            primary_action_list.putObject(idTxtt, current_layer_ref);
+
+            desc125 = new ActionDescriptor();
+
+            idFrom = charIDToTypeID("From");
+            desc125.putInteger(idFrom, italics_indices[i].start_index);  // italics start index
+            idT = charIDToTypeID("T   ");
+            desc125.putInteger(idT, italics_indices[i].end_index);  // italics end index
+
+            idTxtS = charIDToTypeID("TxtS");
+
+            desc126 = new ActionDescriptor();
+            idfontPostScriptName = stringIDToTypeID("fontPostScriptName");
+            desc126.putString(idfontPostScriptName, font_name_mplantin_italic);  // MPlantin italic font name
+            idFntN = charIDToTypeID("FntN");
+            desc126.putString(idFntN, font_name_mplantin_italic);  // MPlantin italic font name
+
+            var idFntS = charIDToTypeID("FntS");
+            idSz = charIDToTypeID("Sz  ");
+            idPnt = charIDToTypeID("#Pnt");
+            desc126.putUnitDouble(idSz, idPnt, layer_font_size);
+            idautoLeading = stringIDToTypeID("autoLeading");
+            desc126.putBoolean(idautoLeading, false);
+            idLdng = charIDToTypeID("Ldng");
+            idPnt = charIDToTypeID("#Pnt");
+            desc126.putUnitDouble(idLdng, idPnt, layer_font_size);
+            idTxtS = charIDToTypeID("TxtS");
+
+            colorDesc = new ActionDescriptor();
+            var idRd = charIDToTypeID("Rd  ");
+            colorDesc.putDouble(idRd, layer_text_colour.rgb.red);  // text colour.red
+            var idGrn = charIDToTypeID("Grn ");
+            colorDesc.putDouble(idGrn, layer_text_colour.rgb.green);  // text colour.green
+            var idBl = charIDToTypeID("Bl  ");
+            colorDesc.putDouble(idBl, layer_text_colour.rgb.blue);  // text colour.blue
+            var idRGBC = charIDToTypeID("RGBC");
+            desc126.putObject(idClr, idRGBC, colorDesc);
+
+            desc125.putObject(idTxtS, idTxtS, desc126);
+
+            current_layer_ref = desc125;
+        }
+    }
+
+    // Format each symbol correctly
+    for (i = 0; i < symbol_indices.length; i++) {
+        current_layer_ref = format_symbol(
+            primary_action_list = primary_action_list,
+            starting_layer_ref = current_layer_ref,
+            symbol_index = symbol_indices[i].index,
+            symbol_colours = symbol_indices[i].colours,
+            layer_font_size = layer_font_size,
+        );
+    }
+
+    idTxtt = charIDToTypeID("Txtt");
+    primary_action_list.putObject(idTxtt, current_layer_ref);
+    primary_action_descriptor.putList(idTxtt, primary_action_list);
+
+    // paragraph formatting
+    var idparagraphStyleRange = stringIDToTypeID("paragraphStyleRange");
+    var list13 = new ActionList();
+    var desc141 = new ActionDescriptor();
+    idFrom = charIDToTypeID("From");
+    desc141.putInteger(idFrom, 0);
+    idT = charIDToTypeID("T   ");
+    desc141.putInteger(idT, input_string.length);  // input string length
+    var idparagraphStyle = stringIDToTypeID("paragraphStyle");
+    var desc142 = new ActionDescriptor();
+    var idfirstLineIndent = stringIDToTypeID("firstLineIndent");
+    idPnt = charIDToTypeID("#Pnt");
+    desc142.putUnitDouble(idfirstLineIndent, idPnt, 0.000000);
+    var idstartIndent = stringIDToTypeID("startIndent");
+    idPnt = charIDToTypeID("#Pnt");
+    desc142.putUnitDouble(idstartIndent, idPnt, 0.000000);
+    var idendIndent = stringIDToTypeID("endIndent");
+    idPnt = charIDToTypeID("#Pnt");
+    desc142.putUnitDouble(idendIndent, idPnt, 0.000000);
+    var idspaceBefore = stringIDToTypeID("spaceBefore");
+    idPnt = charIDToTypeID("#Pnt");
+    if (is_centred) {  // line break lead
+        desc142.putUnitDouble(idspaceBefore, idPnt, 0);
+    } else {
+        desc142.putUnitDouble(idspaceBefore, idPnt, line_break_lead);
+    }
+    var idspaceAfter = stringIDToTypeID("spaceAfter");
+    idPnt = charIDToTypeID("#Pnt");
+    desc142.putUnitDouble(idspaceAfter, idPnt, 0.000000);
+    var iddropCapMultiplier = stringIDToTypeID("dropCapMultiplier");
+    desc142.putInteger(iddropCapMultiplier, 1);
+    var idleadingType = stringIDToTypeID("leadingType");
+    idleadingType = stringIDToTypeID("leadingType");
+    var idleadingBelow = stringIDToTypeID("leadingBelow");
+    desc142.putEnumerated(idleadingType, idleadingType, idleadingBelow);
+    var desc143 = new ActionDescriptor();
+    idfontPostScriptName = stringIDToTypeID("fontPostScriptName");
+    desc143.putString(idfontPostScriptName, font_name_ndpmtg);  // NDPMTG font name
+    idFntN = charIDToTypeID("FntN");
+    desc143.putString(idFntN, font_name_mplantin);  // MPlantin font name
+    idautoLeading = stringIDToTypeID("autoLeading");
+    desc143.putBoolean(idautoLeading, false);
+    primary_action_descriptor.putList(idparagraphStyleRange, list13);
+    var idkerningRange = stringIDToTypeID("kerningRange");
+    var list14 = new ActionList();
+    primary_action_descriptor.putList(idkerningRange, list14);
+    list13 = new ActionList();
+
+    if (input_string.indexOf("\u2022") >= 0) {
+        // Modal card with bullet points - adjust the formatting slightly
+        var startIndexBullet = input_string.indexOf("\u2022");
+        var endIndexBullet = input_string.lastIndexOf("\u2022");
+        idparagraphStyleRange = stringIDToTypeID("paragraphStyleRange");
+        list13 = new ActionList();
+        desc141 = new ActionDescriptor();
+        idFrom = charIDToTypeID("From");
+        desc141.putInteger(idFrom, startIndexBullet);
+        idT = charIDToTypeID("T   ");
+        desc141.putInteger(idT, endIndexBullet + 1);
+        idparagraphStyle = stringIDToTypeID("paragraphStyle");
+        idfirstLineIndent = stringIDToTypeID("firstLineIndent");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idfirstLineIndent, idPnt, -modal_indent); // negative modal indent
+        idstartIndent = stringIDToTypeID("startIndent");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idstartIndent, idPnt, modal_indent); // modal indent
+        idspaceBefore = stringIDToTypeID("spaceBefore");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idspaceBefore, idPnt, 1.0);
+        idspaceAfter = stringIDToTypeID("spaceAfter");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idspaceAfter, idPnt, 0.000000);
+        iddefaultStyle = stringIDToTypeID("defaultStyle");
+        desc143 = new ActionDescriptor();
+        idfontPostScriptName = stringIDToTypeID("fontPostScriptName");
+        desc143.putString(idfontPostScriptName, font_name_ndpmtg);  // NDPMTG font name
+        idFntN = charIDToTypeID("FntN");
+        desc143.putString(idFntN, font_name_mplantin);
+        idSz = charIDToTypeID("Sz  ");
+        idPnt = charIDToTypeID("#Pnt");
+        desc143.putUnitDouble(idSz, idPnt, 11.998500);  // TODO: what's this?
+        idautoLeading = stringIDToTypeID("autoLeading");
+        desc143.putBoolean(idautoLeading, false);
+        idTxtS = charIDToTypeID("TxtS");
+        desc142.putObject(iddefaultStyle, idTxtS, desc143);
+        idparagraphStyle = stringIDToTypeID("paragraphStyle");
+        desc141.putObject(idparagraphStyle, idparagraphStyle, desc142);
+        idparagraphStyleRange = stringIDToTypeID("paragraphStyleRange");
+        list13.putObject(idparagraphStyleRange, desc141);
+        primary_action_descriptor.putList(idparagraphStyleRange, list13);
+        idkerningRange = stringIDToTypeID("kerningRange");
+        list14 = new ActionList();
+        primary_action_descriptor.putList(idkerningRange, list14);
+    }
+
+    if (flavour_index > 0) {
+        // Adjust line break spacing if there's a line break in the flavour text
+        idparagraphStyleRange = stringIDToTypeID("paragraphStyleRange");
+        desc141 = new ActionDescriptor();
+        idFrom = charIDToTypeID("From");
+        desc141.putInteger(idFrom, flavour_index + 3);
+        idT = charIDToTypeID("T   ");
+        desc141.putInteger(idT, flavour_index + 4);
+        idfirstLineIndent = stringIDToTypeID("firstLineIndent");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idfirstLineIndent, idPnt, 0);
+        var idimpliedFirstLineIndent = stringIDToTypeID("impliedFirstLineIndent");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idimpliedFirstLineIndent, idPnt, 0);
+        idstartIndent = stringIDToTypeID("startIndent");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idstartIndent, idPnt, 0);
+        idimpliedStartIndent = stringIDToTypeID("impliedStartIndent");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idimpliedStartIndent, idPnt, 0);
+        idspaceBefore = stringIDToTypeID("spaceBefore");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idspaceBefore, idPnt, flavour_text_lead);  // lead size between rules text and flavour text
+        idparagraphStyle = stringIDToTypeID("paragraphStyle");
+        desc141.putObject(idparagraphStyle, idparagraphStyle, desc142);
+        idparagraphStyleRange = stringIDToTypeID("paragraphStyleRange");
+        list13.putObject(idparagraphStyleRange, desc141);
+        primary_action_descriptor.putList(idparagraphStyleRange, list13);
+        idkerningRange = stringIDToTypeID("kerningRange");
+        list14 = new ActionList();
+        primary_action_descriptor.putList(idkerningRange, list14);
+    }
+
+    if (quote_index > 0) {
+        // Adjust line break spacing if there's a line break in the flavour text
+        idparagraphStyleRange = stringIDToTypeID("paragraphStyleRange");
+        desc141 = new ActionDescriptor();
+        idFrom = charIDToTypeID("From");
+        desc141.putInteger(idFrom, quote_index + 3);
+        idT = charIDToTypeID("T   ");
+        desc141.putInteger(idT, input_string.length);
+        idspaceBefore = stringIDToTypeID("spaceBefore");
+        idPnt = charIDToTypeID("#Pnt");
+        desc142.putUnitDouble(idspaceBefore, idPnt, 0);
+        idparagraphStyle = stringIDToTypeID("paragraphStyle");
+        desc141.putObject(idparagraphStyle, idparagraphStyle, desc142);
+        idparagraphStyleRange = stringIDToTypeID("paragraphStyleRange");
+        list13.putObject(idparagraphStyleRange, desc141);
+        primary_action_descriptor.putList(idparagraphStyleRange, list13);
+        idkerningRange = stringIDToTypeID("kerningRange");
+        list14 = new ActionList();
+        primary_action_descriptor.putList(idkerningRange, list14);
+    }
+
+    // Push changes to document
+    idsetd = charIDToTypeID("setd");
+    idTxLr = charIDToTypeID("TxLr");
+    desc119.putObject(idT, idTxLr, primary_action_descriptor);
+    executeAction(idsetd, desc119, DialogModes.NO);
+
+    // Reset layer's justification and disable hypenation
+    layer.textItem.justification = layer_justification;
+    layer.textItem.hyphenation = false;
 }
 
 function generate_italics(card_text) {

@@ -39,10 +39,11 @@ function compute_text_layer_dimensions(layer) {
      * the layer and computing its width and height from its bounds.
      */
 
-    var layer_copy = layer.duplicate(activeDocument, ElementPlacement.INSIDE);
+    var layer_copy = layer.duplicate(app.activeDocument, ElementPlacement.INSIDE);
     layer_copy.rasterize(RasterizeType.TEXTCONTENTS);
     var dimensions = compute_layer_dimensions(layer_copy);
     layer_copy.remove();
+    
     return dimensions;
 }
 
@@ -476,9 +477,9 @@ function renameFromWeb(filename) {
 
     if ((saveForWebName != filename)) {
         if ((savedImage.exists)) {
-            log("webfile exists");
+            // log("webfile exists");
             if (correctFile.exists) {
-                log("previous file exists");
+                // log("previous file exists");
                 correctFile.remove();
             }
             savedImage.rename(correctFile.name);

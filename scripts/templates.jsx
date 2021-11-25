@@ -46,7 +46,6 @@ var BaseTemplate = Class({
 
         this.layout = layout;
         this.file = file;
-
         this.template_path = file_path + "/" + this.template_file_name() + ".psd";
         this.load_template();
 
@@ -66,6 +65,9 @@ var BaseTemplate = Class({
          */
 
         throw new Error("Template name not specified!");
+    },
+    templateName: function () {
+        return this.template_file_name();
     },
     template_suffix: function () {
         /**
@@ -147,6 +149,24 @@ var BaseTemplate = Class({
 
         return file_name;
     },
+    renderExists: function (size) {
+        var saveLocation = this.getSaveLocation(size);
+        return (new File(saveLocation)).exists;
+    },
+    getLongCardName: function () {
+        return this.layout.scryfall.name + "_" + this.layout.scryfall.id + " (" + this.layout.scryfall.artist + ", " + this.layout.scryfall.art_size + ", " + this.templateName() + ")";
+    },
+    getSaveLocation: function (size) {
+        if (size == "small") {
+            return filePath + "/out/web/" + this.getLongCardName() + ".jpg";
+        } else {
+            return filePath + "/out/large/" + this.getLongCardName() + ".png";
+        }
+    },
+    saveCard: function (size) {
+        if (size == "small") saveSmallImage(filePath + "/out/web/", this.getLongCardName());
+        else savePngImage(filePath + "/out/large/", this.getLongCardName());
+    }
 });
 
 /* Class definitions for Chilli_Axe templates */
