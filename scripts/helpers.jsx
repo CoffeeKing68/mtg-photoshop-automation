@@ -765,7 +765,10 @@ function fileExists(filePath) {
 
 function exitOnKeyboardInterrupt() {
     if (fileExists(filePath + "/temp/photoshopIntertupt")) {
+        log(">>>>>>>>>>>>>>>>>>>>>>>>");
         log("KeyboardInterrupt detected");
+        log(">>>>>>>>>>>>>>>>>>>>>>>>");
+
         exit();
     }
 }

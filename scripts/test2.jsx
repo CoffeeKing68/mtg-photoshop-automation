@@ -23,6 +23,7 @@ function main2() {
         var deckJson = loadJson(decklistPath);
 
         for (cardIndex = 0; cardIndex < deckJson.length; cardIndex++) {
+            exitOnKeyboardInterrupt();
             var card = deckJson[cardIndex];
 
             exportCard(card);
@@ -67,9 +68,6 @@ function exportCard(card) {
         log(card.name, template.templateName());
 
         template.execute();
-        
-        exit();
-
         template.saveCard(size);
     } else {
         log(["skipping", card.name, template.templateName()]);
@@ -84,7 +82,8 @@ function main() {
     makeLogFile();
 
     try {
-        runAllFrameLogicTests();
+        // runAllFrameLogicTests();
+        main2();
     } catch (error) {
         log("Error occurred");
         log(error.message);
@@ -243,7 +242,3 @@ function getTemplateClass(layout, card) {
 
     return templateClass;
 }
-
-// function getLongCardName(card, templateName) {
-//     return card.name + "_" + card.id + " (" + card.artist + ", " + card.art_size + ", " + templateName + ")";
-// }
