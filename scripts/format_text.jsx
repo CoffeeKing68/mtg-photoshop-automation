@@ -38,6 +38,14 @@ function locate_symbols(input_string) {
     }
 }
 
+function escape_regex(value) {
+    /**
+     * Borrowed from https://stackoverflow.com/questions/494035/how-do-you-use-a-variable-in-a-regular-expression
+     */
+
+    return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
+}
+
 function locate_italics(input_string, italics_strings) {
     /**
      * Locate all instances of italic strings in the input string and record their start and end indices.
@@ -57,7 +65,8 @@ function locate_italics(input_string, italics_strings) {
         // replace symbols with their character representations in the italic string
         if (italics.indexOf("}") >= 0) {
             for (var symbol in symbols) {
-                italics = italics.replace(symbol, symbols[symbol]);
+                var re = new RegExp(escape_regex(symbol), "g");
+                italics = italics.replace(re, symbols[symbol]);
             }
         }
 
@@ -132,6 +141,17 @@ function determine_symbol_colours(symbol, symbol_length) {
             colour_map[hybrid_match[2]],
             colour_map[hybrid_match[1]],
             rgb_black(),
+            rgb_black()
+        ];
+    }
+    
+    // Phyrexian hybrid mana
+    var phyrexian_hybrid_regex = /^\{([W,U,B,R,G])\/([W,U,B,R,G])\/P\}$/;
+    var phyrexian_hybrid_match = symbol.match(phyrexian_hybrid_regex);
+    if (phyrexian_hybrid_match !== null) {
+        return [
+            symbol_colour_map[phyrexian_hybrid_match[2]],
+            symbol_colour_map[phyrexian_hybrid_match[1]],
             rgb_black()
         ];
     }
@@ -293,6 +313,16 @@ function format_text(input_string, italics_strings, flavour_index, is_centred) {
         idLdng = charIDToTypeID("Ldng");
         idPnt = charIDToTypeID("#Pnt");
         desc126.putUnitDouble(idLdng, idPnt, layer_font_size);
+        idClr = charIDToTypeID("Clr ");
+        desc127 = new ActionDescriptor();
+        idRd = charIDToTypeID("Rd  ");
+        desc127.putDouble(idRd, text_colour.rgb.red);  // text colour.red
+        idGrn = charIDToTypeID("Grn ");
+        desc127.putDouble(idGrn, text_colour.rgb.green);  // text colour.green
+        idBl = charIDToTypeID("Bl  ");
+        desc127.putDouble(idBl, text_colour.rgb.blue);  // text colour.blue
+        idRGBC = charIDToTypeID("RGBC");
+        desc126.putObject(idClr, idRGBC, desc127);
         idTxtS = charIDToTypeID("TxtS");
         desc125.putObject(idTxtS, idTxtS, desc126);
         current_layer_ref = desc125;
@@ -466,6 +496,7 @@ function format_text(input_string, italics_strings, flavour_index, is_centred) {
     idsetd = charIDToTypeID("setd");
     idTxLr = charIDToTypeID("TxLr");
     desc119.putObject(idT, idTxLr, primary_action_descriptor);
+    app.refresh();
     executeAction(idsetd, desc119, DialogModes.NO);
 
     // Reset layer's justification and disable hypenation

@@ -19,6 +19,7 @@ var planeswalker_class = "planeswalker";
 var snow_class = "snow";
 var basic_class = "basic";
 var planar_class = "planar";
+var token_class = "token";
 
 
 // Layer names
@@ -56,6 +57,14 @@ var LayerNames = {
     COMPANION: "Companion",
     BACKGROUND: "Background",
     NYX: "Nyx",
+    FRAME: "Frame",
+    LEGENDARY: "Legendary",
+    NON_LEGENDARY: "Non-Legendary",
+    CREATURE: "Creature",
+    NON_CREATURE: "Non-Creature",
+    TYPE_LINE_AND_RULES_TEXT:  "Typeline and Rules Text",
+    FULL_ART: "Full Art",
+    ONE_LINE_RULES_TEXT: "One-Line Rules Text",
 
     // borders
     BORDER: "Border",
@@ -180,19 +189,19 @@ var flavour_text_lead = 4.4;
 
 // Symbol colours
 var rgb_c = new SolidColor();
-rgb_c.rgb.red = 204;
-rgb_c.rgb.green = 194;
-rgb_c.rgb.blue = 193;
+rgb_c.rgb.red = 215;
+rgb_c.rgb.green = 208;
+rgb_c.rgb.blue = 205;
 
 var rgb_w = new SolidColor();
-rgb_w.rgb.red = 255;
-rgb_w.rgb.green = 251;
-rgb_w.rgb.blue = 214;
+rgb_w.rgb.red = 254;
+rgb_w.rgb.green = 253;
+rgb_w.rgb.blue = 224;
 
 var rgb_u = new SolidColor();
-rgb_u.rgb.red = 170;
-rgb_u.rgb.green = 224;
-rgb_u.rgb.blue = 250;
+rgb_u.rgb.red = 186;
+rgb_u.rgb.green = 231;
+rgb_u.rgb.blue = 252;
 
 var rgb_b = new SolidColor();
 rgb_b.rgb.red = 159;
@@ -200,14 +209,14 @@ rgb_b.rgb.green = 146;
 rgb_b.rgb.blue = 143;
 
 var rgb_r = new SolidColor();
-rgb_r.rgb.red = 249;
-rgb_r.rgb.green = 169;
-rgb_r.rgb.blue = 143;
+rgb_r.rgb.red = 250;
+rgb_r.rgb.green = 186;
+rgb_r.rgb.blue = 159;
 
 var rgb_g = new SolidColor();
-rgb_g.rgb.red = 154;
-rgb_g.rgb.green = 211;
-rgb_g.rgb.blue = 175;
+rgb_g.rgb.red = 171;
+rgb_g.rgb.green = 221;
+rgb_g.rgb.blue = 189;
 
 // NDPMTG font dictionary to translate Scryfall symbols to font character sequences
 var symbols = {
@@ -216,6 +225,16 @@ var symbols = {
     "{B/P}": "Qp",
     "{R/P}": "Qp",
     "{G/P}": "Qp",
+    "{W/U/P}": "Qqp",
+    "{U/B/P}": "Qqp",
+    "{B/R/P}": "Qqp",
+    "{R/G/P}": "Qqp",
+    "{G/W/P}": "Qqp",
+    "{W/B/P}": "Qqp",
+    "{B/G/P}": "Qqp",
+    "{G/U/P}": "Qqp",
+    "{U/R/P}": "Qqp",
+    "{R/W/P}": "Qqp",
     "{E}": "e",
     "{T}": "ot",
     "{X}": "ox",
@@ -386,6 +405,10 @@ var ability_words = [
     "Hide",
     "Charge Them",
     "Befriend Them",
+    "Negative Energy Cone",
+    
+    // Midnight Hunt words
+    "Coven",
 ];
 
 // Card rarities
