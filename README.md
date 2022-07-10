@@ -1,21 +1,23 @@
 # MTG Photoshop Automation
 Photoshop scripting to generate high-quality Magic card renders, inserting Scryfall data into Photoshop frame templates.
 
-Trademark and copyright Wizards of the Coast 2021. Templates for this project include Wizards of the Coast's IP, including: the Beleren font, mana symbols, set icons, background textures, and card text. Templates for this project include the appropriate copyright disclaimers. Read WotC's fan content policy here: https://company.wizards.com/en/legal/fancontentpolicy
+Trademark and copyright Wizards of the Coast 2022. Templates for this project include Wizards of the Coast's IP, including: the Beleren font, mana symbols, set icons, background textures, and card text. Templates for this project include the appropriate copyright disclaimers. Read WotC's fan content policy here: https://company.wizards.com/en/legal/fancontentpolicy
 # Example
 ![img1](https://i.imgur.com/4TTvpND.png)
 
 # Requirements
   * A copy of Photoshop. I tested the system using CS5 and CC 2018, but other versions may work as well.
   * The Photoshop templates:
-    * [Automated templates](https://drive.google.com/drive/folders/1_8szsVZ6-0Uoxr0XzLcYM6Zjcx89wqYR?usp=sharing) (compatible with this project)
-    * [Manual templates](https://drive.google.com/drive/folders/1wAH-JKPHa5cPcMcEiyE9q46WH6PEaXnj?usp=sharing) which may also be of interest
+    * [Automated templates](https://drive.google.com/drive/folders/1_8szsVZ6-0Uoxr0XzLcYM6Zjcx89wqYR?usp=sharing), which are compatible with this project
+    * [Manual templates](https://drive.google.com/drive/folders/1wAH-JKPHa5cPcMcEiyE9q46WH6PEaXnj?usp=sharing), which may also be of interest
   * The following fonts:
-    * [Beleren Smallcaps, MPlantin and MPlantin-Italics](https://github.com/magarena/magarena/tree/master/resources/cardbuilder/fonts) and [Beleren2016](https://magic.wizards.com/sites/all/themes/wiz_mtg/fonts/Beleren/Beleren2016-Bold.ttf),
-    * My custom Magic symbols font, NDPMTG,ttf, included in the repo,
+    * [Beleren Smallcaps, MPlantin, and MPlantin-Italics](https://github.com/magarena/magarena/tree/master/resources/cardbuilder/fonts),
+    * Beleren2016:
+      * I have included a copy of the font in this repo which tweaks the asterisk symbol to match how it appears in the power / toughness of real cards,
+      * You can download the original from Wizards' website [here](https://magic.wizards.com/sites/all/themes/wiz_mtg/fonts/Beleren/Beleren2016-Bold.ttf),
+    * My custom Magic symbols font `NDPMTG.ttf`, included in the repo,
     * [Keyrune](https://keyrune.andrewgioia.com/) and [Mana](https://mana.andrewgioia.com/), for the expansion symbol and transform symbols,
     * Relay Medium and Calibri.
-  * [json2.js](https://github.com/douglascrockford/JSON-js), included but you may need to download a more recent version.
   * A standard installation of [Python 3](https://www.python.org/downloads/).
 
 # Install and Usage Guide
@@ -29,11 +31,13 @@ Trademark and copyright Wizards of the Coast 2021. Templates for this project in
 * **Optional**: Copy the files from `/scripts/utils` to the `Scripts` folder in your Photoshop installation. For me, this was `C:\Program Files\Adobe\Adobe Photoshop CC 2018\Presets\Scripts`. Modify the paths in those files to point to the corresponding files in `/scripts`. This enables the use of a few utility scripts which are handy when making renders manually.
 
 # FAQ
-* *I want to change the set symbol to something else.* Head over to https://andrewgioia.github.io/Keyrune/cheatsheet.html - you can use any of these symbols for the set symbol for your cards. Copy the text of the symbol you want on the cheatsheet, then replace the expansion symbor character in quotations at the top of the file with the character you copied.
-* *I'm getting an error message saying that the Python call failed and `card.json` was not created.* This is a result of the Python command not executing properly on your computer. The error message contains a copy of the command the system attempted - copy this command and try running it from the command line. You may need to adjust the command in `call_python()` in `render.jsx` depending on how your Python installation is configured.
+* *I want to change the set symbol to something else.* Head over to https://andrewgioia.github.io/Keyrune/cheatsheet.html - you can use any of these symbols for the set symbol for your cards. Copy the text of the symbol you want on the cheatsheet, then replace the expansion symbol character in quotations at the top of the file with the character you copied.
+* *I'm getting an error message saying that the Python call failed and `card.json` was not created.* This is a result of the Python command not executing properly on your computer. The error message contains a copy of the command the system attempted - copy this command and try running it from the command line to diagnose the issue. You may need to adjust the Python command defined in `settings.jsx` depending on how your computer's Python installation is configured. The default commands are:
+    * Windows: `python ...`
+    * macOS: `/usr/local/bin/python3 ...`
 
 # Scope
-* Modern style cards, normal and extended; transform and mdfc, front and back; basic lands, normal, Theros, and Unstable styles; planeswalkers, normal and extended; mutate, adventure, miracle, and snow cards; and various flavours of fancy frames - stargazing, universes beyond, masterpiece, ZNE expedition, and womensday.
+* Modern style cards, normal and extended; transform and mdfc, front and back; basic lands, normal, Theros, and Unstable styles; planeswalkers, normal and extended; mutate, adventure, miracle, and snow cards; various flavours of fancy frames - stargazing, universes beyond, masterpiece, ZNE expedition, and womensday; planar cards, tokens, and basic lands.
 * Leveler and saga cards require manual intervention to position text layers, but are automated up until that point.
 * Planeswalkers also require manual intervention to position text layers and the ragged textbox divider, but are automated up until that point.
 * Flavour text divider is not supported, as rules text & flavour text are formatted in the same text layer, and it would be impractical to position the flavour text divider programmatically with Adobe's JavaScript library.

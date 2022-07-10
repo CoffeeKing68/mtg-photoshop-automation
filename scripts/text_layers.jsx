@@ -111,18 +111,28 @@ function vertically_align_text(layer, reference_layer) {
      * Rasterises a given text layer and centres it vertically with respect to the bounding box of a reference layer.
      */
 
-    var raster_layer = layer.duplicate(app.activeDocument, ElementPlacement.INSIDE);
-    raster_layer.name = getRasterizedLayerName(layer);
-    raster_layer.move(layer, ElementPlacement.PLACEBEFORE);
-    raster_layer.rasterize(RasterizeType.TEXTCONTENTS);
+    // var raster_layer = layer.duplicate(app.activeDocument, ElementPlacement.INSIDE);
+    // raster_layer.name = getRasterizedLayerName(layer);
+    // raster_layer.move(layer, ElementPlacement.PLACEBEFORE);
+    // raster_layer.rasterize(RasterizeType.TEXTCONTENTS);
 
-    select_layer_pixels(reference_layer);
-    align_vertical(raster_layer);
-    clear_selection();
+    // select_layer_pixels(reference_layer);
+    // align_vertical(raster_layer);
+    // clear_selection();
 
-    layer.visible = false;
+    // layer.visible = false;
     
-    return raster_layer;
+    // return raster_layer;
+    var layer_copy = layer.duplicate(activeDocument, ElementPlacement.INSIDE);
+    layer_copy.rasterize(RasterizeType.TEXTCONTENTS);
+    select_layer_pixels(reference_layer);
+    app.activeDocument.activeLayer = layer_copy;
+    align_vertical(layer_copy);
+    clear_selection();
+    var layer_dimensions = compute_text_layer_bounds(layer);
+    var layer_copy_dimensions = compute_text_layer_bounds(layer_copy);
+    layer.translate(0, layer_copy_dimensions[1].as("px") - layer_dimensions[1].as("px"));
+    layer_copy.remove();
 }
 
 function vertically_nudge_creature_text(layer, reference_layer, top_reference_layer) {
@@ -133,7 +143,9 @@ function vertically_nudge_creature_text(layer, reference_layer, top_reference_la
     // if the layer needs to be nudged
     if (layer.bounds[2].as("px") >= reference_layer.bounds[0].as("px")) {
         select_layer_pixels(reference_layer);
-        app.activeDocument.activeLayer = layer;
+        var rasterised_copy = layer.duplicate();
+        rasterised_copy.rasterize(RasterizeType.ENTIRELAYER);
+        app.activeDocument.activeLayer = rasterised_copy;
 
         // the copied bit of the text layer within the PT box will be inserted into a layer with this name
         var extra_bit_layer_name = "Extra Bit";
@@ -161,12 +173,13 @@ function vertically_nudge_creature_text(layer, reference_layer, top_reference_la
         // determine how much the rules text overlaps the power/toughness by
         var extra_bit_layer = layer.parent.layers.getByName(extra_bit_layer_name);
         var delta = top_reference_layer.bounds[3].as("px") - extra_bit_layer.bounds[3].as("px");
-        extra_bit_layer.visible = false;
 
         if (delta < 0) {
-            layer.applyOffset(0, new UnitValue(delta, "px"), OffsetUndefinedAreas.SETTOBACKGROUND);
+            layer.translate(0, new UnitValue(delta, "px"));
         }
 
+        rasterised_copy.remove();
+        extra_bit_layer.remove();
         clear_selection();
     }
 }
@@ -343,14 +356,16 @@ var FormattedTextArea = Class({
             // log(this.layer.textItem.size);
 
             // rasterise and centre vertically
-            this.rasterLayer = vertically_align_text(this.layer, this.reference_layer);
+            // this.rasterLayer = vertically_align_text(this.layer, this.reference_layer);
 
-            if (this.is_centred) {
-                // ensure the layer is centred horizontally as well
-                select_layer_pixels(this.reference_layer);
-                align_horizontal(this.layer);
-                clear_selection();
-            }
+            // if (this.is_centred) {
+            //     // ensure the layer is centred horizontally as well
+            //     select_layer_pixels(this.reference_layer);
+            //     align_horizontal(this.layer);
+            //     clear_selection();
+            // }
+            // centre vertically
+            vertically_align_text(this.layer, this.reference_layer);
         }
     }
 });

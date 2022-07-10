@@ -49,6 +49,18 @@ function compute_text_layer_dimensions(layer) {
     return dimensions;
 }
 
+function compute_text_layer_bounds(layer) {
+    /**
+     * Return an object with the specified text layer's bounding box.
+     */
+
+    var layer_copy = layer.duplicate(activeDocument, ElementPlacement.INSIDE);
+    layer_copy.rasterize(RasterizeType.TEXTCONTENTS);
+    var layer_bounds = layer_copy.bounds;
+    layer_copy.remove();
+    return layer_bounds;
+}
+
 function select_layer_pixels(layer) {
     /**
      * Select the bounding box of a given layer.
@@ -179,6 +191,45 @@ function disable_active_layer_mask() {
      */
 
     set_active_layer_mask(false);
+}
+
+function set_active_vector_mask(visible) {
+    /**
+     * Set the visibility of the active layer's vector mask.
+     */
+
+    var idsetd = charIDToTypeID( "setd" );
+    var desc248 = new ActionDescriptor();
+    var idnull = charIDToTypeID( "null" );
+    var ref138 = new ActionReference();
+    var idLyr = charIDToTypeID( "Lyr " );
+    var idOrdn = charIDToTypeID( "Ordn" );
+    var idTrgt = charIDToTypeID( "Trgt" );
+    ref138.putEnumerated( idLyr, idOrdn, idTrgt );
+    desc248.putReference( idnull, ref138 );
+    var idT = charIDToTypeID( "T   " );
+    var desc249 = new ActionDescriptor();
+    var idvectorMaskEnabled = stringIDToTypeID( "vectorMaskEnabled" );
+    desc249.putBoolean( idvectorMaskEnabled, visible );
+    var idLyr = charIDToTypeID( "Lyr " );
+    desc248.putObject( idT, idLyr, desc249 );
+    executeAction( idsetd, desc248, DialogModes.NO );
+}
+
+function enable_active_vector_mask() {
+    /**
+     * Enables the active layer's vector mask.
+     */
+
+    set_active_vector_mask(true);
+}
+
+function disable_active_vector_mask() {
+    /**
+     * Disables the active layer's vector mask.
+     */
+
+    set_active_vector_mask(false);
 }
 
 function apply_stroke(stroke_weight, stroke_colour) {
@@ -427,12 +478,8 @@ function retrieve_scryfall_scan(image_url, file_path) {
      */
 
     // default to Windows command
-    var python_command = "python \"" + file_path + "/scripts/get_card_scan.py\" \"" + image_url + "\"";
-    if ($.os.search(/windows/i) === -1) {
-        // macOS
-        python_command = "/usr/local/bin/python3 \"" + file_path + "/scripts/get_card_scan.py\" \"" + image_url + "\" >> " + file_path + "/scripts/debug.log 2>&1";
-    }
-    app.system(python_command);
+    var scryfall_scan_command = python_command + " \"" + file_path + "/scripts/get_card_scan.py\" \"" + image_url + "\"";
+    app.system(scryfall_scan_command);
     return new File(file_path + image_file_path);
 }
 

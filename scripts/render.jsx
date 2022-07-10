@@ -36,13 +36,8 @@ function call_python(card_name, file_path) {
      * Returns the parsed JSON result if the Python call was successful, or raises an error if it wasn't.
      */
 
-    // default to Windows command
-    var python_command = "python \"" + file_path + "/scripts/get_card_info.py\" \"" + card_name + "\"";
-    if ($.os.search(/windows/i) === -1) {
-        // macOS
-        python_command = "/usr/local/bin/python3 \"" + file_path + "/scripts/get_card_info.py\" \"" + card_name + "\" >> " + file_path + "/scripts/debug.log 2>&1";
-    }
-    app.system(python_command);
+    var scryfall_info_command = python_command + " \"" + file_path + "/scripts/get_card_info.py\" \"" + card_name + "\"";
+    app.system(scryfall_info_command);
 
     var json_file = new File(file_path + json_file_path);
     json_file.open('r');
@@ -51,7 +46,7 @@ function call_python(card_name, file_path) {
     if (json_string === "") {
         throw new Error(
             "\n\ncard.json does not exist - the system failed to successfully run get_card_info.py.\nThe attempted Python call was made with the " +
-            "following command:\n\n" + python_command + "\n\nYou may need to edit this command in render.jsx depending on your computer's configuration. " +
+            "following command:\n\n" + scryfall_info_command + "\n\nYou may need to edit this command in settings.jsx depending on your computer's configuration. " +
             "Try running the command from the command line as that may help you debug the issue"
         );
     }
@@ -139,6 +134,10 @@ function select_template(layout, file, file_path) {
         default_: PlanarTemplate,
         other: [],
     };
+    class_template_map[token_class] = {
+        default_: TokenTemplate,
+        other: [],
+    };
 
     var template_class = class_template_map[layout.card_class];
     var template = template_class.default_;
@@ -173,7 +172,7 @@ function render(file) {
         if (layout_name in layout_map) {
             var layout = new layout_map[layout_name](scryfall, card_name);
         } else {
-            throw new Error("Layout" + layout_name + " is not supported. Sorry!");
+            throw new Error("Layout \"" + layout_name + "\" is not supported. Sorry!");
         }
 
         // if artist specified in file name, insert the specified artist into layout obj
