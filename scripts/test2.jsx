@@ -16,7 +16,13 @@ var MACOS = File.fs == "Macintosh";
 var filePath = File($.fileName).parent.parent.fsName;
 
 function main2() {
-    var decklistNames = ["BRAN"];
+    var decklistNames = [
+        "BRAN", "DANY", "OTHERs",
+        "BLOODRAVEN", "TITANIA", "STONEHEART",
+        "OBEKA", "IRON_BANK", "MAEGOR",
+        "VISENYA", "UG_FLASH", "MODERN",
+        "TOKENS",
+    ];
 
     for (var i = 0; i < decklistNames.length; i++) {
         var decklistPath = filePath + "/decklists/" + decklistNames[i] + ".json";
@@ -40,37 +46,75 @@ function exportCard(card) {
 
     card.image_uris = { large: null };
     card.type_line = card.type;
+    
+    // rarity fix
+    var rarity_map = {
+        "M": rarity_mythic,
+        "R": rarity_rare,
+        "U": rarity_uncommon,
+        "C": rarity_common
+    }
+    
+    if (rarity_map.hasOwnProperty(card.rarity)) card.rarity = rarity_map[card.rarity];
 
     // instantiate layout obj (unpacks scryfall json and stores relevant parts in obj properties)
     if (card.layout in layout_map) {
         var layout = new layout_map[card.layout](card, card.name);
     } else {
-        throw new Error("Layout" + card.layout + " is not supported. Sorry!");
+        log([">>>>>>>>> No layout found", card.name]);
+        return false;
+        // throw new Error("Layout" + card.layout + " is not supported. Sorry!");
     }
 
     layout.artist = card.artist;
 
     // select and execute the template - insert text fields, set visibility of layers, etc. - and save to disk
     var originalArtFile = new File(card.image_location);
-    var moveArtFile = new File(filePath + "/decklists/images/" + originalArtFile.name);
+    var moveArtFile = new File(
+        'D:\\Gigapixel\\2022_01_30\\gigapixel\\scaled_' +
+        originalArtFile.name.split(".")[0] + 
+        "-art-scale-4_00x.png"
+    );
 
     // overrides
-    // var temp = getTemplateClass(layout, card);
-    // var templateName = temp[0];
-    // var templateClass = temp[1];
+    var temp = getTemplateClass(layout, card);
+    var templateName = temp[0];
+    var templateClass = temp[1];
 
     // layout, ArtFileObj, relativePath
-    var template = new WomensDayTemplate(layout, moveArtFile, templateLocation);
-    var size = "small";
+    // var template = new templateClass(layout, moveArtFile, templateLocation);
+    var size = "large";
 
+    // renderExists: function (size) {
+    //     return (new File(this.getSaveLocation(size))).exists;
+    // },
+    // getLongCardName: function () {
+    //     return this.layout.scryfall.name + "_" + this.layout.scryfall.id + " 
+    // (" + this.layout.scryfall.artist + ", " + this.layout.scryfall.art_size + ", " + this.templateName() + ")";
+    // },
+    // getSaveLocation: function (size) {
+    //     if (size == "small") {
+    //         return filePath + "/out/web/" + this.getLongCardName() + ".jpg";
+    //     } else {
+    //         return filePath + "/out/large/" + this.getLongCardName() + ".png";
+    //     }
+    // },
+    // Anguished Unmaking_b8ebd6de-ed5b-4ee0-aca6-865a8b56927f (John McCambridge, fullart, womensday).png
+    var longCardName = card.name + "_" + card.id + " (" + card.artist + ", " + card.art_size + ", " + templateName + ")";
+    var saveLocation = filePath + "/out/";
+
+    if (size == "small") saveLocation += "web/" + longCardName + ".jpg";
+    else saveLocation += "large/" + longCardName + ".png";
+    
     // bugged;
-    if (!template.renderExists(size)) {
-        log(card.name, template.templateName());
+    if (!(new File(saveLocation)).exists) {
+    // if (!template.renderExists(size)) {
+        log([card.name, templateName]);
 
-        template.execute();
-        template.saveCard(size);
+        // template.execute();
+        // template.saveCard(size);
     } else {
-        log(["skipping", card.name, template.templateName()]);
+        log(["skipping", card.name, templateName]);
     }
 }
 

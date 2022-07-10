@@ -305,19 +305,7 @@ var FormattedTextField = Class({
                 italic_text.push(this.flavour_text);
             }
             flavour_index = this.text_contents.length;
-
-            // app.activeDocument.activeLayer = this.layer;
-            // log(this.layer.textItem.contents);
-            // this.layer.textItem.contents = this.text_contents + "\r" + this.flavour_text;
-
-            // exit();
-
-
-            // log(this.layer.textItem.contents);
-            // exit();
         }
-        // log("Textfield.format_text");
-        // log(layer.textItem.size);
 
         // app.activeDocument.activeLayer = this.layer;
         format_text(this.layer, this.text_contents + "\r" + this.flavour_text, italic_text, flavour_index, this.is_centred);

@@ -47,6 +47,9 @@ var BaseTemplate = Class({
         this.layout = layout;
         this.file = file;
         this.template_path = file_path + "/" + this.template_file_name() + ".psd";
+        this.open_template();
+    },
+    open_template: function () {
         this.load_template();
 
         this.art_layer = app.activeDocument.layers.getByName(default_layer);
@@ -132,6 +135,7 @@ var BaseTemplate = Class({
          * sure to call this.super()) and enable_frame_layers().
          */
 
+        this.open_template();
         // only try to paste + scale art if it exists.
         if (this.file && this.file.exists) {
             this.load_artwork();
@@ -150,8 +154,7 @@ var BaseTemplate = Class({
         return file_name;
     },
     renderExists: function (size) {
-        var saveLocation = this.getSaveLocation(size);
-        return (new File(saveLocation)).exists;
+        return (new File(this.getSaveLocation(size))).exists;
     },
     getLongCardName: function () {
         return this.layout.scryfall.name + "_" + this.layout.scryfall.id + " (" + this.layout.scryfall.artist + ", " + this.layout.scryfall.art_size + ", " + this.templateName() + ")";
@@ -164,8 +167,11 @@ var BaseTemplate = Class({
         }
     },
     saveCard: function (size) {
-        if (size == "small") saveSmallImage(filePath + "/out/web/", this.getLongCardName());
-        else savePngImage(filePath + "/out/large/", this.getLongCardName());
+        var dir = filePath + "/out/" + ((size == "small") ? "web" : "large");
+        (new Folder(dir)).create();
+
+        if (size == "small") saveSmallImage(dir, this.getLongCardName());
+        else savePngImage(dir, this.getLongCardName());
     }
 });
 
