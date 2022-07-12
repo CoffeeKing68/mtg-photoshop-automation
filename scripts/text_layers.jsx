@@ -388,6 +388,6 @@ var CreatureFormattedTextArea = Class({
 
         // shift vertically if the text overlaps the PT box
         // var rasterizedLayer = getRasterizedLayer(this.layer);
-        vertically_nudge_creature_text(this.rasterLayer, this.pt_reference_layer, this.pt_top_reference_layer);
+        vertically_nudge_creature_text(this.layer, this.pt_reference_layer, this.pt_top_reference_layer);
     }
 })

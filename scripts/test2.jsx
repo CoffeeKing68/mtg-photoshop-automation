@@ -46,6 +46,7 @@ function exportCard(card) {
 
     card.image_uris = { large: null };
     card.type_line = card.type;
+    if (card.mana_cost == null) card.mana_cost = "";
     
     // rarity fix
     var rarity_map = {
@@ -75,46 +76,23 @@ function exportCard(card) {
         originalArtFile.name.split(".")[0] + 
         "-art-scale-4_00x.png"
     );
-
     // overrides
     var temp = getTemplateClass(layout, card);
     var templateName = temp[0];
     var templateClass = temp[1];
-
-    // layout, ArtFileObj, relativePath
-    // var template = new templateClass(layout, moveArtFile, templateLocation);
+    
+    var template = new templateClass(layout, moveArtFile, templateLocation);
     var size = "large";
 
-    // renderExists: function (size) {
-    //     return (new File(this.getSaveLocation(size))).exists;
-    // },
-    // getLongCardName: function () {
-    //     return this.layout.scryfall.name + "_" + this.layout.scryfall.id + " 
-    // (" + this.layout.scryfall.artist + ", " + this.layout.scryfall.art_size + ", " + this.templateName() + ")";
-    // },
-    // getSaveLocation: function (size) {
-    //     if (size == "small") {
-    //         return filePath + "/out/web/" + this.getLongCardName() + ".jpg";
-    //     } else {
-    //         return filePath + "/out/large/" + this.getLongCardName() + ".png";
-    //     }
-    // },
-    // Anguished Unmaking_b8ebd6de-ed5b-4ee0-aca6-865a8b56927f (John McCambridge, fullart, womensday).png
-    var longCardName = card.name + "_" + card.id + " (" + card.artist + ", " + card.art_size + ", " + templateName + ")";
-    var saveLocation = filePath + "/out/";
 
-    if (size == "small") saveLocation += "web/" + longCardName + ".jpg";
-    else saveLocation += "large/" + longCardName + ".png";
-    
-    // bugged;
-    if (!(new File(saveLocation)).exists) {
-    // if (!template.renderExists(size)) {
+    if (!template.renderExists(size)) {
         log([card.name, templateName]);
-
-        // template.execute();
-        // template.saveCard(size);
+        // layout, ArtFileObj, relativePath
+ 
+        template.execute();
+        template.saveCard(size);
     } else {
-        log(["skipping", card.name, templateName]);
+        // log(["skipping", card.name, templateName]);
     }
 }
 
@@ -181,7 +159,7 @@ function buildTemplateMap() {
         other: [],
     };
     class_template_map[saga_class] = {
-        default_: SagaTemplate,
+        default_: WomensDayTemplate,
         other: [],
     };
     class_template_map[miracle_class] = {
@@ -189,9 +167,9 @@ function buildTemplateMap() {
         other: [],
     };
     class_template_map[planeswalker_class] = {
-        default_: PlaneswalkerTemplate,
+        default_: PlaneswalkerExtendedTemplate,
         other: [
-            PlaneswalkerExtendedTemplate,
+            PlaneswalkerTemplate,
         ],
     };
     class_template_map[snow_class] = {
@@ -199,15 +177,19 @@ function buildTemplateMap() {
         other: [],
     };
     class_template_map[basic_class] = {
-        default_: BasicLandTemplate,
+        default_:  BasicLandTherosTemplate,
         other: [
+            BasicLandTemplate,
             BasicLandClassicTemplate,
-            BasicLandTherosTemplate,
             BasicLandUnstableTemplate,
         ],
     };
     class_template_map[planar_class] = {
         default_: PlanarTemplate,
+        other: [],
+    };
+    class_template_map[token_class] = {
+        default_: TokenTemplate,
         other: [],
     };
 
@@ -217,7 +199,7 @@ function buildTemplateMap() {
 function getTemplateClass(layout, card) {
     var templateMap = buildTemplateMap();
     var artSize = card.art_size;
-    var templateClass = null;
+    // var templateClass = null;
 
     if (layout.card_class == basic_class) {
         return ["BasicLandTheros", BasicLandTherosTemplate];
@@ -230,7 +212,7 @@ function getTemplateClass(layout, card) {
             artSize == "fullart" && card.is_personal == false) {
             // StargazingTemplate => (theros god enchantment, fullart)
             return ["Stargazing", StargazingTemplate];
-            templateClass = "Stargazing";
+            // templateClass = "Stargazing";
             // templateClass = StargazingTemplate;
         } else if (in_array(["ZEN", "WWK", "ROE", "BFZ", "OGW", "ZNR", "EXP", "ZNE"], card.set) &&
             artSize == "fullart" && card.type.indexOf('Land') >= 0) {
@@ -261,7 +243,6 @@ function getTemplateClass(layout, card) {
             }
         }
     } else {
-        // templateClass = templateMap[layout.card_class];
         var mapToName = [
             [transform_front_class, "TransformFront"],
             [transform_back_class, "TransformBack"],
@@ -276,13 +257,12 @@ function getTemplateClass(layout, card) {
             [planeswalker_class, "Planeswalker"],
             [snow_class, "Snow"],
             [planar_class, "Planar"],
+            [token_class, "Token"]
         ];
         for (var i = 0; i < mapToName.length; i++) {
             if (mapToName[i][0] == layout.card_class) {
-                return [mapToName[i][1], templateMap[layout.card_class]];
+                return [mapToName[i][1], templateMap[layout.card_class].default_];
             }
         }
     }
-
-    return templateClass;
 }

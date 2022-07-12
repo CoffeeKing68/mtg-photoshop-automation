@@ -46,8 +46,8 @@ var BaseTemplate = Class({
 
         this.layout = layout;
         this.file = file;
+        this.file_path = file_path;
         this.template_path = file_path + "/" + this.template_file_name() + ".psd";
-        this.open_template();
     },
     open_template: function () {
         this.load_template();
@@ -279,8 +279,13 @@ var ChilliBaseTemplate = Class({
          * Downloads the card's scryfall scan, pastes it into the document next to the active layer, and frames it to fill
          * the given reference layer. Can optionally rotate the layer by 90 degrees (useful for planar cards).
          */
+        var layer = create_new_layer("New Layer");
+        paste_file(layer, this.file);
 
-        var layer = insert_scryfall_scan(this.layout.scryfall_scan, file_path);
+        // paste_file(this.art_layer, this.file);
+        // log(this.layout.scryfall_scan);
+        // log(file_path);
+        // var layer = insert_scryfall_scan(this.layout.scryfall_scan, file_path);
         if (rotate === true) {
             layer.rotate(90);
         }
@@ -351,9 +356,11 @@ var NormalTemplate = Class({
             power_toughness.visible = false;
         }
     },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
-
+    // constructor: function (layout, file, file_path) {
+    //     this.super(layout, file, file_path);
+    // },
+    open_template: function() {
+        this.super();
         var docref = app.activeDocument;
 
         this.art_reference = docref.layers.getByName(LayerNames.ART_FRAME);
@@ -414,7 +421,6 @@ var NormalTemplate = Class({
 });
 
 /* Classic variant */
-
 var NormalClassicTemplate = Class({
     /**
      * A template for 7th Edition frame. Each frame is flattened into its own singular layer.
@@ -427,8 +433,11 @@ var NormalClassicTemplate = Class({
     template_suffix: function () {
         return "Classic";
     },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
+    // constructor: function (layout, file, file_path) {
+    //     this.super(layout, file, file_path);
+    // },
+    open_template: function() {
+        this.super();
 
         var docref = app.activeDocument;
         this.art_reference = docref.layers.getByName(LayerNames.ART_FRAME);
@@ -737,8 +746,11 @@ var TransformBackTemplate = Class({
     dfc_layer_group: function () {
         return LayerNames.TF_BACK;
     },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
+    // constructor: function (layout, file, file_path) {
+    //     this.super(layout, file, file_path);
+    // },
+    open_template: function() {
+        this.super();
         // set transform icon
         var transform_group = app.activeDocument.layers.getByName(LayerNames.TEXT_AND_ICONS).layers.getByName(this.dfc_layer_group());
         transform_group.layers.getByName(this.layout.transform_icon).visible = true;
@@ -780,7 +792,9 @@ var TransformFrontTemplate = Class({
     constructor: function (layout, file, file_path) {
         this.other_face_is_creature = layout.other_face_power !== undefined && layout.other_face_toughness !== undefined;
         this.super(layout, file, file_path);
-
+    },
+    open_template: function() {
+        this.super();
         // if creature on back face, set flipside power/toughness
         if (this.other_face_is_creature) {
             flipside_power_toughness = app.activeDocument.layers.getByName(LayerNames.TEXT_AND_ICONS).layers.getByName(LayerNames.FLIPSIDE_POWER_TOUGHNESS);
@@ -915,8 +929,12 @@ var MDFCBackTemplate = Class({
     dfc_layer_group: function () {
         return LayerNames.MDFC_BACK;
     },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
+    // constructor: function (layout, file, file_path) {
+    //     this.super(layout, file, file_path);
+    // },
+    open_template: function() {
+        this.super();
+
         // set visibility of top & bottom mdfc elements and set text of left & right text
         var mdfc_group = app.activeDocument.layers.getByName(LayerNames.TEXT_AND_ICONS).layers.getByName(this.dfc_layer_group());
         mdfc_group.layers.getByName(LayerNames.TOP).layers.getByName(this.layout.twins).visible = true;
@@ -936,7 +954,6 @@ var MDFCBackTemplate = Class({
                 reference_layer = right,
             ),
         ]);
-
     },
 });
 
@@ -1002,8 +1019,11 @@ var AdventureTemplate = Class({
     template_file_name: function () {
         return "adventure";
     },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
+    // constructor: function (layout, file, file_path) {
+    //     this.super(layout, file, file_path);
+    // },
+    open_template: function() {
+        this.super();
 
         // add adventure name, mana cost, type line, and rules text fields to this.text_layers
         var docref = app.activeDocument;
@@ -1125,12 +1145,14 @@ var SagaTemplate = Class({
     template_file_name: function () {
         return "saga";
     },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
-
+    // constructor: function (layout, file, file_path) {
+    //     this.super(layout, file, file_path);
+    // },
+    open_template: function() {
+        this.super();
         // paste scryfall scan
         app.activeDocument.activeLayer = app.activeDocument.layers.getByName(LayerNames.TWINS);
-        this.paste_scryfall_scan(app.activeDocument.layers.getByName(LayerNames.SCRYFALL_SCAN_FRAME), file_path);
+        this.paste_scryfall_scan(app.activeDocument.layers.getByName(LayerNames.SCRYFALL_SCAN_FRAME), this.file_path);
     },
     rules_text_and_pt_layers: function (text_and_icons) {
         var saga_text_group = text_and_icons.layers.getByName("Saga");
@@ -1177,9 +1199,10 @@ var PlaneswalkerTemplate = Class({
     },
     constructor: function (layout, file, file_path) {
         this.super(layout, file, file_path);
-
         exit_early = true;
-
+    },
+    open_template: function() {
+        this.super();
         this.art_reference = app.activeDocument.layers.getByName(LayerNames.PLANESWALKER_ART_FRAME);
         if (this.layout.is_colourless) this.art_reference = app.activeDocument.layers.getByName(LayerNames.FULL_ART_FRAME);
 
@@ -1253,7 +1276,7 @@ var PlaneswalkerTemplate = Class({
 
         // paste scryfall scan
         app.activeDocument.activeLayer = this.docref.layers.getByName(LayerNames.TEXTBOX);
-        this.paste_scryfall_scan(app.activeDocument.layers.getByName(LayerNames.SCRYFALL_SCAN_FRAME), file_path);
+        this.paste_scryfall_scan(app.activeDocument.layers.getByName(LayerNames.SCRYFALL_SCAN_FRAME), this.file);
     },
     enable_frame_layers: function () {
         // twins and pt box
@@ -1296,6 +1319,9 @@ var PlanarTemplate = Class({
     constructor: function (layout, file, file_path) {
         this.super(layout, file, file_path);
         exit_early = true;
+    },
+    open_template: function() {
+        this.super();
 
         var docref = app.activeDocument;
         this.art_reference = docref.layers.getByName(LayerNames.ART_FRAME);
@@ -1361,7 +1387,7 @@ var PlanarTemplate = Class({
 
         // paste scryfall scan
         app.activeDocument.activeLayer = docref.layers.getByName(LayerNames.TEXTBOX);
-        this.paste_scryfall_scan(app.activeDocument.layers.getByName(LayerNames.SCRYFALL_SCAN_FRAME), file_path, true);
+        this.paste_scryfall_scan(app.activeDocument.layers.getByName(LayerNames.SCRYFALL_SCAN_FRAME), this.file, true);
     },
     enable_frame_layers: function () { },
 });
@@ -1378,10 +1404,13 @@ var TokenTemplate = Class({
     },
     constructor: function(layout, file, file_path) {
         this.super(layout, file, file_path);
-        var docref = app.activeDocument;
 
         this.is_creature = this.layout.power !== undefined && this.layout.toughness !== undefined;
         this.is_legendary = this.layout.type_line.indexOf("Legendary") >= 0;
+    },
+    open_template: function() {
+        this.super();
+        var docref = app.activeDocument;
 
         this.art_reference = docref.layers.getByName(LayerNames.ART_FRAME);
         var text_and_icons = docref.layers.getByName(LayerNames.TEXT_AND_ICONS);
@@ -1489,6 +1518,9 @@ var BasicLandTemplate = Class({
     constructor: function (layout, file, file_path) {
         this.super(layout, file, file_path);
 
+    },
+    open_template: function() {
+        this.super();
         this.art_reference = app.activeDocument.layers.getByName(LayerNames.BASIC_ART_FRAME);
     },
     enable_frame_layers: function () {

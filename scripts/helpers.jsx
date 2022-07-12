@@ -449,6 +449,7 @@ function paste_file(layer, file) {
 
     var prev_active_layer = app.activeDocument.activeLayer;
     app.activeDocument.activeLayer = layer;
+    
     app.load(file);
     // note context switch to art file
     app.activeDocument.selection.selectAll();
