@@ -10,7 +10,7 @@ function fix_colour_pair(input) {
 }
 
 // function select_frame_layers(scryfall, mana_cost, type_line, oracle_text, colour_identity_array) {
-function select_frame_layers(mana_cost, type_line, oracle_text, colour_identity_array, colour_indicator) {
+function select_frame_layers(mana_cost, type_line, oracle_text, colour_identity_array, color_indicator) {
     const colours = [LayerNames.WHITE, LayerNames.BLUE, LayerNames.BLACK, LayerNames.RED, LayerNames.GREEN];
     const basic_colours = { "Plains": LayerNames.WHITE, "Island": LayerNames.BLUE, "Swamp": LayerNames.BLACK, "Mountain": LayerNames.RED, "Forest": LayerNames.GREEN };
     const hybrid_symbols = ["W/U", "U/B", "B/R", "R/G", "G/W", "W/B", "B/G", "G/U", "U/R", "R/W"];
@@ -194,12 +194,12 @@ function select_frame_layers(mana_cost, type_line, oracle_text, colour_identity_
         var colour_identity = "";
         if (mana_cost == "" || (mana_cost == "{0}" && type_line.indexOf(LayerNames.ARTIFACT) < 0)) {
             // Card with no mana cost
-            // If `colour_indicator` is defined for this card, use that as the colour identity
+            // If `color_indicator` is defined for this card, use that as the colour identity
             // Otherwise, use `colour_identity` as the colour identity
             if (colour_identity_array === undefined || colour_identity_array.length == 0) {
                 colour_identity = "";
-            } else if (colour_indicator !== undefined && colour_indicator !== null) {
-                colour_identity = colour_indicator.join("");
+            } else if (color_indicator !== undefined && color_indicator !== null) {
+                colour_identity = color_indicator.join("");
             } else {
                 colour_identity = colour_identity_array.join("");
             }
@@ -255,7 +255,7 @@ function select_frame_layers(mana_cost, type_line, oracle_text, colour_identity_
         // Identify if the card is a two-colour hybrid card
         var hybrid = false;
         if (colour_identity.length == 2) {
-            for (hybrid_symbol in hybrid_symbols) {
+            for (var hybrid_symbol in hybrid_symbols) {
                 if (mana_cost.indexOf(hybrid_symbols[hybrid_symbol]) >= 0) {
                     // The card is two colours and has a hybrid symbol in its mana cost
                     hybrid = true; break;

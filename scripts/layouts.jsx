@@ -29,7 +29,7 @@ var BaseLayout = Class({
         this.set_card_class();
 
         // var ret = select_frame_layers(scryfall, this.mana_cost, this.type_line, this.oracle_text, this.colour_identity);
-        var ret = select_frame_layers(this.mana_cost, this.type_line, this.oracle_text, this.colour_identity, this.colour_indicator);
+        var ret = select_frame_layers(this.mana_cost, this.type_line, this.oracle_text, this.colour_identity, this.color_indicator);
 
         this.twins = ret.twins;
         this.pinlines = ret.pinlines;
@@ -47,7 +47,7 @@ var BaseLayout = Class({
         this.rarity = this.scryfall.rarity;
         this.artist = this.scryfall.artist;
         this.colour_identity = this.scryfall.color_identity;
-        this.colour_indicator = null;
+        this.color_indicator = this.scryfall.color_indicator;
         this.keywords = [];
         if (this.scryfall.keywords !== undefined) {
             this.keywords = this.scryfall.keywords;
@@ -103,7 +103,7 @@ var NormalLayout = Class({
         }
         this.power = this.scryfall.power;
         this.toughness = this.scryfall.toughness;
-        this.colour_indicator = this.scryfall.color_indicator;
+        this.color_indicator = this.scryfall.color_indicator;
 
         this.scryfall_scan = this.scryfall.image_uris.large;
     },
@@ -132,7 +132,7 @@ var TransformLayout = Class({
         this.other_face_power = this.scryfall.card_faces[this.other_face].power;
         this.toughness = this.scryfall.card_faces[this.face].toughness;
         this.other_face_toughness = this.scryfall.card_faces[this.other_face].toughness;
-        this.colour_indicator = this.scryfall.card_faces[this.face].color_indicator;
+        this.color_indicator = this.scryfall.card_faces[this.face].color_indicator;
         this.transform_icon = this.scryfall.frame_effects[0];  // TODO: safe to assume the first frame effect will be the transform icon?
 
         this.scryfall_scan = this.scryfall.card_faces[this.face].image_uris.large;
@@ -195,7 +195,7 @@ var ModalDoubleFacedLayout = Class({
         }
         this.power = this.scryfall.card_faces[this.face].power;
         this.toughness = this.scryfall.card_faces[this.face].toughness;
-        this.colour_indicator = this.scryfall.card_faces[this.face].color_indicator;  // comes as an array from scryfall
+        this.color_indicator = this.scryfall.card_faces[this.face].color_indicator;  // comes as an array from scryfall
         this.transform_icon = "modal_dfc";  // set here so the card name is shifted
 
         // mdfc banner things
@@ -205,7 +205,7 @@ var ModalDoubleFacedLayout = Class({
             this.scryfall.card_faces[this.other_face].type_line,
             this.scryfall.card_faces[this.other_face].oracle_text,
             this.scryfall.card_faces[this.other_face].color_identity,
-            this.scryfall.card_faces[this.other_face].colour_indicator,
+            this.scryfall.card_faces[this.other_face].color_indicator,
         ).twins;
         var other_face_type_line_split = this.scryfall.card_faces[this.other_face].type_line.split(" ");
         this.other_face_left = other_face_type_line_split[other_face_type_line_split.length - 1];

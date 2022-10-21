@@ -84,6 +84,7 @@ var LayerNames = {
     ARTIST: "Artist",
     NONCREATURE_COPYRIGHT: "Noncreature WotC Copyright",
     CREATURE_COPYRIGHT: "Creature WotC Copyright",
+    PLANESWALKER_COPYRIGHT: "WotC Copyright",
 
     // text and icons
     TEXT_AND_ICONS: "Text and Icons",
@@ -96,7 +97,7 @@ var LayerNames = {
     MANA_COST: "Mana Cost",
     MANA_COST_ADVENTURE: "Mana Cost - Adventure",
     EXPANSION_SYMBOL: "Expansion Symbol",
-    COLOUR_INDICATOR: "Colour Indicator",
+    color_indicator: "Colour Indicator",
     POWER_TOUGHNESS: "Power / Toughness",
     FLIPSIDE_POWER_TOUGHNESS: "Flipside Power / Toughness",
     RULES_TEXT: "Rules Text",
@@ -157,6 +158,9 @@ var LayerNames = {
     // classic
     NONLAND: "Nonland",
     LAND: "Land",
+};
+var LayerDefaults = {
+    ARTIST: "Artist"
 };
 
 var default_layer = "Layer 1";
@@ -422,3 +426,8 @@ rarity_rare = "rare";
 rarity_mythic = "mythic";
 rarity_special = "special";
 rarity_bonus = "bonus";
+
+var COPYRIGHT_TEXT = "mpcautofill.com";
+var DEFAULT_YEAR = "2021";
+
+var WUBRG = ["W", "U", "B", "R", "G"];

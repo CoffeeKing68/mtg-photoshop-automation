@@ -76,12 +76,12 @@ const test_cases = {
     "Brisela, Voice of Nightmares": { layout: MeldLayout, frame: [LayerNames.COLOURLESS, LayerNames.COLOURLESS, LayerNames.COLOURLESS, false, true] },
     "Archangel Avacyn": { layout: TransformLayout, frame: [LayerNames.WHITE, LayerNames.WHITE, LayerNames.WHITE, false, false] },
     "Avacyn, the Purifier": { layout: TransformLayout, frame: [LayerNames.RED, LayerNames.RED, LayerNames.RED, false, false] },
-    "Curious Homunculus": {layout: TransformLayout, frame: [LayerNames.BLUE, LayerNames.BLUE, LayerNames.BLUE, false, false]},
-    "Voracious Reader": {layout: TransformLayout, frame: [LayerNames.COLOURLESS, LayerNames.COLOURLESS, LayerNames.COLOURLESS, false, true]},
-    "Barkchannel Pathway": {layout: ModalDoubleFacedLayout, frame: [LayerNames.LAND, LayerNames.GREEN, LayerNames.GREEN, false, false]},
-    "Tidechannel Pathway": {layout: ModalDoubleFacedLayout, frame: [LayerNames.LAND, LayerNames.BLUE, LayerNames.BLUE, false, false]},
-    "Blex, Vexing Pest": {layout: ModalDoubleFacedLayout, frame: [LayerNames.GREEN, LayerNames.GREEN, LayerNames.GREEN, false, false]},
-    "Search for Blex": {layout: ModalDoubleFacedLayout, frame: [LayerNames.BLACK, LayerNames.BLACK, LayerNames.BLACK, false, false]},
+    "Curious Homunculus": { layout: TransformLayout, frame: [LayerNames.BLUE, LayerNames.BLUE, LayerNames.BLUE, false, false] },
+    "Voracious Reader": { layout: TransformLayout, frame: [LayerNames.COLOURLESS, LayerNames.COLOURLESS, LayerNames.COLOURLESS, false, true] },
+    "Barkchannel Pathway": { layout: ModalDoubleFacedLayout, frame: [LayerNames.LAND, LayerNames.GREEN, LayerNames.GREEN, false, false] },
+    "Tidechannel Pathway": { layout: ModalDoubleFacedLayout, frame: [LayerNames.LAND, LayerNames.BLUE, LayerNames.BLUE, false, false] },
+    "Blex, Vexing Pest": { layout: ModalDoubleFacedLayout, frame: [LayerNames.GREEN, LayerNames.GREEN, LayerNames.GREEN, false, false] },
+    "Search for Blex": { layout: ModalDoubleFacedLayout, frame: [LayerNames.BLACK, LayerNames.BLACK, LayerNames.BLACK, false, false] },
     "Extus, Oriq Overlord": { layout: ModalDoubleFacedLayout, frame: [LayerNames.GOLD, LayerNames.WB, LayerNames.GOLD, false, false] },
     "Awaken the Blood Avatar": { layout: ModalDoubleFacedLayout, frame: [LayerNames.GOLD, LayerNames.BR, LayerNames.GOLD, false, false] },
 
@@ -282,7 +282,7 @@ function runAllFrameLogicTests() {
 
     var scryfallTestObj = loadJson(filePath + "/frame_logic_test_data.json");
 
-    for (var test_case in test_cases) {
+    for (var test_case in scryfallTestObj) {
         exitOnKeyboardInterrupt();
 
         // Test the current test case
@@ -292,8 +292,7 @@ function runAllFrameLogicTests() {
 
         if (result[0]) {
             log("PASSED");
-        }
-        else {
+        } else {
             log("FAILED: " + test_case + " - expected [" + test_cases[test_case].frame + "], returned [" + result[1] + "]");
             exit();
         }

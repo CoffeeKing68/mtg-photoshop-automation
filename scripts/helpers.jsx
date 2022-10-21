@@ -30,6 +30,10 @@ function compute_layer_dimensions(layer) {
      */
 
     return {
+        left: layer.bounds[0].as("px"),
+        right: layer.bounds[2].as("px"),
+        top: layer.bounds[3].as("px"),
+        bottom: layer.bounds[1].as("px"),
         width: layer.bounds[2].as("px") - layer.bounds[0].as("px"),
         height: layer.bounds[3].as("px") - layer.bounds[1].as("px"),
     };
@@ -40,9 +44,9 @@ function compute_text_layer_dimensions(layer) {
      * Return an object with the specified text layer's width and height, which is achieved by rasterising
      * the layer and computing its width and height from its bounds.
      */
-
     var layer_copy = layer.duplicate(app.activeDocument, ElementPlacement.INSIDE);
     layer_copy.rasterize(RasterizeType.TEXTCONTENTS);
+    rasterizeLayerStyle(layer_copy);
     var dimensions = compute_layer_dimensions(layer_copy);
     layer_copy.remove();
 
@@ -198,22 +202,22 @@ function set_active_vector_mask(visible) {
      * Set the visibility of the active layer's vector mask.
      */
 
-    var idsetd = charIDToTypeID( "setd" );
+    var idsetd = charIDToTypeID("setd");
     var desc248 = new ActionDescriptor();
-    var idnull = charIDToTypeID( "null" );
+    var idnull = charIDToTypeID("null");
     var ref138 = new ActionReference();
-    var idLyr = charIDToTypeID( "Lyr " );
-    var idOrdn = charIDToTypeID( "Ordn" );
-    var idTrgt = charIDToTypeID( "Trgt" );
-    ref138.putEnumerated( idLyr, idOrdn, idTrgt );
-    desc248.putReference( idnull, ref138 );
-    var idT = charIDToTypeID( "T   " );
+    var idLyr = charIDToTypeID("Lyr ");
+    var idOrdn = charIDToTypeID("Ordn");
+    var idTrgt = charIDToTypeID("Trgt");
+    ref138.putEnumerated(idLyr, idOrdn, idTrgt);
+    desc248.putReference(idnull, ref138);
+    var idT = charIDToTypeID("T   ");
     var desc249 = new ActionDescriptor();
-    var idvectorMaskEnabled = stringIDToTypeID( "vectorMaskEnabled" );
-    desc249.putBoolean( idvectorMaskEnabled, visible );
-    var idLyr = charIDToTypeID( "Lyr " );
-    desc248.putObject( idT, idLyr, desc249 );
-    executeAction( idsetd, desc248, DialogModes.NO );
+    var idvectorMaskEnabled = stringIDToTypeID("vectorMaskEnabled");
+    desc249.putBoolean(idvectorMaskEnabled, visible);
+    var idLyr = charIDToTypeID("Lyr ");
+    desc248.putObject(idT, idLyr, desc249);
+    executeAction(idsetd, desc248, DialogModes.NO);
 }
 
 function enable_active_vector_mask() {
@@ -407,8 +411,10 @@ function replace_text(layer, replace_this, replace_with) {
     /**
      * Replace all instances of `replace_this` in the specified layer with `replace_with`.
      */
+    var state = rememberActiveLayerState();
 
     app.activeDocument.activeLayer = layer;
+
     var idreplace = stringIDToTypeID("replace");
     var desc22 = new ActionDescriptor();
     idnull = charIDToTypeID("null");
@@ -440,6 +446,20 @@ function replace_text(layer, replace_this, replace_with) {
     var idfindReplace = stringIDToTypeID("findReplace");
     desc22.putObject(idUsng, idfindReplace, desc23);
     executeAction(idreplace, desc22, DialogModes.NO);
+
+    restoreActiveLayerState(state);
+}
+
+function rememberActiveLayerState() {
+    return {
+        layer: app.activeDocument.activeLayer,
+        visible: app.activeDocument.activeLayer.visible,
+    };
+}
+
+function restoreActiveLayerState(state) {
+    app.activeDocument.activeLayer = state.layer;
+    app.activeDocument.activeLayer.visible = state.visible;
 }
 
 function paste_file(layer, file) {
@@ -447,9 +467,11 @@ function paste_file(layer, file) {
      * Pastes the given file into the specified layer.
      */
 
-    var prev_active_layer = app.activeDocument.activeLayer;
+    var state = rememberActiveLayerState();
+    // var prev_active_layer = app.activeDocument.activeLayer;
+    // var visible = 
     app.activeDocument.activeLayer = layer;
-    
+
     app.load(file);
     // note context switch to art file
     app.activeDocument.selection.selectAll();
@@ -459,7 +481,8 @@ function paste_file(layer, file) {
     app.activeDocument.paste();
 
     // return document to previous state
-    app.activeDocument.activeLayer = prev_active_layer;
+    // app.activeDocument.activeLayer = prev_active_layer;
+    restoreActiveLayerState(state);
 }
 
 function paste_file_into_new_layer(file) {
@@ -550,8 +573,6 @@ function saveJpgImage(location, cardName) {
 
     docRef.saveAs(new File(filename), jpgOptions, true, Extension.LOWERCASE);
 
-    // Close the thing without saving
-    docRef.close(SaveOptions.DONOTSAVECHANGES);
 }
 
 function savePngImage(location, cardName) {
@@ -577,9 +598,6 @@ function savePngImage(location, cardName) {
     var idCpy = charIDToTypeID("Cpy ");
     desc3.putBoolean(idCpy, true);
     executeAction(idsave, desc3, DialogModes.NO);
-
-    // Close the thing without saving
-    docRef.close(SaveOptions.DONOTSAVECHANGES);
 }
 
 function removeDicretics(str) {
@@ -819,4 +837,305 @@ function exitOnKeyboardInterrupt() {
 
         exit();
     }
+}
+
+function clearHistory() {
+    // clears history of current file.
+    // same effect as closing without saving and re-opening, without having to wait to reopen
+    if (app.documents.length) {
+        var docName = app.activeDocument.name;
+
+        var desc = new ActionDescriptor();
+        var ref = new ActionReference();
+        ref.putName(stringIDToTypeID("snapshotClass"), docName);
+        desc.putReference(stringIDToTypeID("null"), ref);
+        executeAction(stringIDToTypeID("select"), desc, DialogModes.NO);
+
+        var desc = new ActionDescriptor();
+        var ref = new ActionReference();
+        ref.putProperty(stringIDToTypeID("property"), stringIDToTypeID("historyStates"));
+        ref.putEnumerated(stringIDToTypeID("document"), stringIDToTypeID("ordinal"), stringIDToTypeID("targetEnum"));
+        desc.putReference(stringIDToTypeID("null"), ref);
+        executeAction(stringIDToTypeID("clearEvent"), desc, DialogModes.NO);
+    }
+}
+
+function hexToRGB(hex) {
+    var c = 1
+    if (hex.charAt(0) != "#") c = 0;
+
+    var r = parseInt(hex.substring(c, c + 2), 16)
+    var g = parseInt(hex.substring(c + 2, c + 4), 16)
+    var b = parseInt(hex.substring(c + 4, c + 6), 16)
+
+    return { r: r, g: g, b: b };
+}
+
+function hexToSolidColor(hex) {
+    var myColor = new SolidColor();
+    var rgb = hexToRGB(hex);
+
+    myColor.rgb.red = rgb.r;
+    myColor.rgb.green = rgb.g;
+    myColor.rgb.blue = rgb.b;
+
+    return myColor;
+}
+
+function fillLayer(layer, solidColor) {
+    app.activeDocument.activeLayer = layer;
+    app.activeDocument.selection.fill(solidColor);
+}
+
+function fillSolidColorFillLayer(layer, solidColor) {
+    var state = rememberActiveLayerState();
+    app.activeDocument.activeLayer = layer;
+
+    var idsetd = charIDToTypeID("setd");
+    var desc195 = new ActionDescriptor();
+    var idnull = charIDToTypeID("null");
+    var ref118 = new ActionReference();
+    var idcontentLayer = stringIDToTypeID("contentLayer");
+    var idOrdn = charIDToTypeID("Ordn");
+    var idTrgt = charIDToTypeID("Trgt");
+    ref118.putEnumerated(idcontentLayer, idOrdn, idTrgt);
+    desc195.putReference(idnull, ref118);
+    var idT = charIDToTypeID("T   ");
+    var desc196 = new ActionDescriptor();
+    var idClr = charIDToTypeID("Clr ");
+    var desc197 = new ActionDescriptor();
+    var idRd = charIDToTypeID("Rd  ");
+    desc197.putDouble(idRd, solidColor.rgb.red);
+    var idGrn = charIDToTypeID("Grn ");
+    desc197.putDouble(idGrn, solidColor.rgb.green);
+    var idBl = charIDToTypeID("Bl  ");
+    desc197.putDouble(idBl, solidColor.rgb.blue);
+    var idRGBC = charIDToTypeID("RGBC");
+    desc196.putObject(idClr, idRGBC, desc197);
+    var idsolidColorLayer = stringIDToTypeID("solidColorLayer");
+    desc195.putObject(idT, idsolidColorLayer, desc196);
+    executeAction(idsetd, desc195, DialogModes.NO);
+
+    restoreActiveLayerState(state);
+}
+
+function enableLayerMaskImproved(layer, enable, pixel) {
+    if (layer) app.activeDocument.activeLayer = layer;
+    enable = (enable === undefined) ? true : enable;
+    pixel = (pixel === undefined) ? true : pixel;
+
+    var idsetd = charIDToTypeID("setd");
+    var desc1470 = new ActionDescriptor();
+    var idnull = charIDToTypeID("null");
+    var ref530 = new ActionReference();
+    var idLyr = charIDToTypeID("Lyr ");
+    var idOrdn = charIDToTypeID("Ordn");
+    var idTrgt = charIDToTypeID("Trgt");
+    ref530.putEnumerated(idLyr, idOrdn, idTrgt);
+    desc1470.putReference(idnull, ref530);
+    var idT = charIDToTypeID("T   ");
+    var desc1471 = new ActionDescriptor();
+
+    // var idvectorMaskEnabled = stringIDToTypeID("vectorMaskEnabled");
+    // var idUsrM = charIDToTypeID("UsrM");
+
+    var idMaskType = charIDToTypeID(pixel ? "UsrM" : "vectorMaskEnabled");
+    desc1471.putBoolean(idMaskType, enable);
+
+    var idLyr = charIDToTypeID("Lyr ");
+    desc1470.putObject(idT, idLyr, desc1471);
+    executeAction(idsetd, desc1470, DialogModes.NO);
+}
+
+function setFill(layer, fillPercentage) {
+    var state = rememberActiveLayerState();
+    if (layer) layer = app.activeDocument.activeLayer;
+
+    var idsetd = charIDToTypeID("setd");
+    var desc196 = new ActionDescriptor();
+    var idnull = charIDToTypeID("null");
+    var ref91 = new ActionReference();
+    var idLyr = charIDToTypeID("Lyr ");
+    var idOrdn = charIDToTypeID("Ordn");
+    var idTrgt = charIDToTypeID("Trgt");
+    ref91.putEnumerated(idLyr, idOrdn, idTrgt);
+    desc196.putReference(idnull, ref91);
+    var idT = charIDToTypeID("T   ");
+
+    var desc197 = new ActionDescriptor();
+    var idfillOpacity = stringIDToTypeID("fillOpacity");
+    var idPrc = charIDToTypeID("#Prc");
+    desc197.putUnitDouble(idfillOpacity, idPrc, fillPercentage);
+    var idLyr = charIDToTypeID("Lyr ");
+    desc196.putObject(idT, idLyr, desc197);
+
+    executeAction(idsetd, desc196, DialogModes.NO);
+
+    restoreActiveLayerState(state);
+}
+
+function setSpaceBeforeParagraph(layer, space) {
+    app.activeDocument.activeLayer = layer;
+    // =======================================================
+    var idsetd = charIDToTypeID("setd");
+
+    var desc564 = new ActionDescriptor();
+    var idnull = charIDToTypeID("null");
+
+    var ref94 = new ActionReference();
+    var idPrpr = charIDToTypeID("Prpr");
+    var idparagraphStyle = stringIDToTypeID("paragraphStyle");
+    ref94.putProperty(idPrpr, idparagraphStyle);
+    var idTxLr = charIDToTypeID("TxLr");
+    var idOrdn = charIDToTypeID("Ordn");
+    var idTrgt = charIDToTypeID("Trgt");
+    ref94.putEnumerated(idTxLr, idOrdn, idTrgt);
+    desc564.putReference(idnull, ref94);
+    var idT = charIDToTypeID("T   ");
+
+    var desc565 = new ActionDescriptor();
+    var idtextOverrideFeatureName = stringIDToTypeID("textOverrideFeatureName");
+    desc565.putInteger(idtextOverrideFeatureName, 808464437);
+    var idspaceBefore = stringIDToTypeID("spaceBefore");
+    var idPxl = charIDToTypeID("#Pxl");
+    desc565.putUnitDouble(idspaceBefore, idPxl, space.as("px"));
+    // var idparagraphStyle = stringIDToTypeID("paragraphStyle");
+    desc564.putObject(idT, idparagraphStyle, desc565);
+
+    executeAction(idsetd, desc564, DialogModes.NO);
+}
+
+function insertManaCost(manaCostLayer, cardManaCost) {
+    manaCostLayer.visible = cardManaCost != "";
+
+    var black = hexToSolidColor("000000");
+
+    if (manaCostLayer.visible) {
+        // app.activeDocument.activeLayer = manaCostLayer;
+        formatText(manaCostLayer, cardManaCost, [], -1, false, black);
+        manaCostLayer.textItem.justification = Justification.RIGHT; // Force justification
+    }
+}
+
+function balanceLeftText(leftTextLayer, rightBound) {
+    var minGap = 16; // minimum 16 px gap
+
+    // Scale down text to fit in case it's too long
+    var textFontSize = leftTextLayer.textItem.size;
+    var fontResolutionScalar = getFontResolutionScalar();
+
+    while (leftTextLayer.bounds[2].as("px") > rightBound - minGap) {
+        textFontSize -= 1;
+        leftTextLayer.textItem.size = new UnitValue(textFontSize * fontResolutionScalar, "px");
+    }
+}
+
+function setStroke(layer, color, size, opacity) {
+    var state = rememberActiveLayerState();
+
+    app.activeDocument.activeLayer = layer;
+
+    var desc0 = new ActionDescriptor();
+
+    var ref = new ActionReference();
+    ref.putProperty(charIDToTypeID("Prpr"), charIDToTypeID("Lefx"));
+    ref.putEnumerated(charIDToTypeID("Lyr "), charIDToTypeID("Ordn"), charIDToTypeID("Trgt"));
+    desc0.putReference(charIDToTypeID("null"), ref);
+
+    var desc1 = new ActionDescriptor();
+    desc1.putUnitDouble(charIDToTypeID("Scl "), charIDToTypeID("#Prc"), 833.333333);
+
+    var desc2 = new ActionDescriptor();
+    desc2.putBoolean(charIDToTypeID("enab"), true);
+    desc2.putBoolean(stringIDToTypeID("present"), true);
+    desc2.putBoolean(stringIDToTypeID("showInDialog"), true);
+    desc2.putEnumerated(charIDToTypeID("Styl"), charIDToTypeID("FStl"), charIDToTypeID("OutF"));
+    desc2.putEnumerated(charIDToTypeID("PntT"), charIDToTypeID("FrFl"), charIDToTypeID("SClr"));
+    // blendmode
+    desc2.putEnumerated(charIDToTypeID("Md  "), charIDToTypeID("BlnM"), charIDToTypeID("Nrml"));
+    // opacity
+    if (opacity !== undefined) desc2.putUnitDouble(charIDToTypeID("Opct"), charIDToTypeID("#Prc"), opacity);
+    // stroke size
+    if (size !== undefined) desc2.putUnitDouble(charIDToTypeID("Sz  "), charIDToTypeID("#Pxl"), size);
+
+    var desc3 = new ActionDescriptor();
+    desc3.putDouble(charIDToTypeID("Rd  "), color.rgb.red);
+    desc3.putDouble(charIDToTypeID("Grn "), color.rgb.green);
+    desc3.putDouble(charIDToTypeID("Bl  "), color.rgb.blue);
+
+    desc2.putObject(charIDToTypeID("Clr "), charIDToTypeID("RGBC"), desc3);
+    desc2.putBoolean(stringIDToTypeID("overprint"), false);
+    desc1.putObject(charIDToTypeID("FrFX"), charIDToTypeID("FrFX"), desc2);
+    desc0.putObject(charIDToTypeID("T   "), charIDToTypeID("Lefx"), desc1);
+
+    executeAction(charIDToTypeID("setd"), desc0, DialogModes.NO);
+    restoreActiveLayerState(state);
+}
+
+function toggleStroke(layer, show) {
+    var state = rememberActiveLayerState();
+
+    app.activeDocument.activeLayer = layer;
+
+    // var idHd = charIDToTypeID(show ? "Shw " : "Hd  ");
+    var desc = new ActionDescriptor();
+    // var idnull = charIDToTypeID("null");
+    var list = new ActionList();
+    var ref = new ActionReference();
+    // var idFrFX = charIDToTypeID("FrFX");
+    ref.putIndex(charIDToTypeID("FrFX"), 1);
+    // var idLyr = charIDToTypeID("Lyr ");
+    // var idOrdn = charIDToTypeID("Ordn");
+    // var idTrgt = charIDToTypeID("Trgt");
+    ref.putEnumerated(charIDToTypeID("Lyr "), charIDToTypeID("Ordn"), charIDToTypeID("Trgt"));
+    list.putReference(ref);
+    desc.putList(charIDToTypeID("null"), list);
+    executeAction(charIDToTypeID(show ? "Shw " : "Hd  "), desc, DialogModes.NO);
+
+    restoreActiveLayerState(state);
+}
+
+function rasterizeLayerStyle(layer) {
+    var state = rememberActiveLayerState();
+    app.activeDocument.activeLayer = layer;
+
+    // =======================================================
+    // var idinvokeCommand = stringIDToTypeID("invokeCommand");
+    // var desc249 = new ActionDescriptor();
+    // var idcommandID = stringIDToTypeID("commandID");
+    // desc249.putInteger(idcommandID, 3557);
+    // var idkcanDispatchWhileModal = stringIDToTypeID("kcanDispatchWhileModal");
+    // desc249.putBoolean(idkcanDispatchWhileModal, true);
+    // executeAction(idinvokeCommand, desc249, DialogModes.NO);
+
+    // =======================================================
+    // var idhistoryStateChanged = stringIDToTypeID("historyStateChanged");
+    // var desc250 = new ActionDescriptor();
+    // var idDocI = charIDToTypeID("DocI");
+    // desc250.putInteger(idDocI, 224);
+    // var idIdnt = charIDToTypeID("Idnt");
+    // desc250.putInteger(idIdnt, 962);
+    // var idNm = charIDToTypeID("Nm  ");
+    // desc250.putString(idNm, """Rasterize Layer Style""");
+    // var idhasEnglish = stringIDToTypeID("hasEnglish");
+    // desc250.putBoolean(idhasEnglish, true);
+    // executeAction(idhistoryStateChanged, desc250, DialogModes.NO);
+
+    // =======================================================
+    var idrasterizeLayer = stringIDToTypeID("rasterizeLayer");
+    var desc251 = new ActionDescriptor();
+    var idnull = charIDToTypeID("null");
+    var ref39 = new ActionReference();
+    var idLyr = charIDToTypeID("Lyr ");
+    var idOrdn = charIDToTypeID("Ordn");
+    var idTrgt = charIDToTypeID("Trgt");
+    ref39.putEnumerated(idLyr, idOrdn, idTrgt);
+    desc251.putReference(idnull, ref39);
+    var idWhat = charIDToTypeID("What");
+    var idrasterizeItem = stringIDToTypeID("rasterizeItem");
+    var idlayerStyle = stringIDToTypeID("layerStyle");
+    desc251.putEnumerated(idWhat, idrasterizeItem, idlayerStyle);
+    executeAction(idrasterizeLayer, desc251, DialogModes.NO);
+    
+    restoreActiveLayerState(state);
 }

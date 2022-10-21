@@ -38,6 +38,7 @@ function scale_text_to_fit_reference(layer, reference_layer) {
 
     // Reduce the reference height by 64 pixels to avoid text landing on the top/bottom bevels
     var reference_height = compute_layer_dimensions(reference_layer).height - 64;
+    // log(['reference_height', reference_height]);
 
     // initialise lead and font size tracker variables to the font size of the layer's text
     var font_size = starting_font_size;
@@ -52,32 +53,29 @@ function scale_text_to_fit_reference(layer, reference_layer) {
     var dimensions = compute_text_layer_dimensions(layer);
 
     // logObj(dimensions);
-    // log(dimensions['height']);
     // log(dimensions.height);
 
     // logObj(compute_layer_dimensions(layer));
 
     var layer_height = dimensions.height;
-    // log("layerHeight");
-    // log(layer_height);
+    // log(["layer_height", layer_height]);
 
     // exit();
 
     var fontScalar = getFontResolutionScalar();
 
-    // log(fontScalar);
-
+    // log(['fontScalar', fontScalar]);
+    // var step = 0;
     while (reference_height < layer_height) {
-        // log(font_size);
-        // log(step_size);
+        // log(["step", step]);
+        // log(["font_size", font_size]);
+        // log(["step_size", step_size]);
 
         scaled = true;
         // step down font and lead sizes by the step size, and update those sizes in the layer
         font_size = font_size - step_size;
 
-        // log(font_size);
-
-        // log(font_size);
+        // log(["new font_size", font_size]);
 
         // log(font_size * fontScalar);
         // log(150 * 0.06);
@@ -86,13 +84,12 @@ function scale_text_to_fit_reference(layer, reference_layer) {
         layer.textItem.size = font_size * fontScalar;
         layer.textItem.leading = font_size;
 
-        // log(layer.textItem.size);
-        // exit();
-
         layer_height = compute_text_layer_dimensions(layer).height;
+        
+        // log(["new layer_height", layer_height]);
+        // step += 1;
     }
-
-    // exit();
+    // log(['step', step]);
 
     return scaled;
 }
@@ -254,7 +251,7 @@ var ExpansionSymbolField = Class({
             apply_stroke(stroke_weight, rgb_black());
         }
     }
-})
+});
 
 var BasicFormattedTextField = Class({
     /**
@@ -271,7 +268,7 @@ var BasicFormattedTextField = Class({
         // format text function call
         // app.activeDocument.activeLayer = this.layer;
         var italic_text = generate_italics(this.text_contents);
-        format_text(this.layer, this.text_contents, italic_text, -1, false, this.text_colour);
+        format_text(this.layer, this.text_contents, italic_text, -1, false);
     }
 });
 
@@ -328,7 +325,7 @@ var FormattedTextField = Class({
             this.layer.textItem.justification = Justification.CENTER;
         }
     }
-})
+});
 
 var FormattedTextArea = Class({
     /**
@@ -390,4 +387,4 @@ var CreatureFormattedTextArea = Class({
         // var rasterizedLayer = getRasterizedLayer(this.layer);
         vertically_nudge_creature_text(this.layer, this.pt_reference_layer, this.pt_top_reference_layer);
     }
-})
+});

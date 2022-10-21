@@ -60,7 +60,7 @@ function savePngImage(location, cardName) {
 }
 
 function enableLayerMask(layer, enable, pixel) {
-    visibility = layer.visible;
+    var visibility = layer.visible;
     if (layer) app.activeDocument.activeLayer = layer;
     enable = (enable === undefined) ? true : enable;
     pixel = (pixel === undefined) ? true : pixel;

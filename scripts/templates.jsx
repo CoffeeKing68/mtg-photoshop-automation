@@ -61,6 +61,8 @@ var BaseTemplate = Class({
                 text_colour = rgb_white(),
             ),
         ];
+        this.updateYear();
+        this.updateLegalText();
     },
     template_file_name: function () {
         /**
@@ -85,30 +87,26 @@ var BaseTemplate = Class({
         /**
          * Opens the template's PSD file in Photoshop.
          */
-        var template = null;
-        for (i = 0; i < app.documents.length; i++) {
-            // app.documents[i].source.indexOf(this.template_file_name());
-
-            if (app.documents[i].name == this.template_file_name() + ".psd") {
-                //the file you are looking for is already open
-                template = app.documents[i];
-                break;
-            }
-        }
-
-        // TODO: if that's the file that's currently open, reset instead of opening? idk 
-        if (template) {
-            // can also go rever route, not sure which is faster?
-            app.activeDocument.close(SaveOptions.DONOTSAVECHANGES);
-        }
-
         try {
-            var template_file = new File(this.template_path);
-            app.open(template_file);
+            app.open(new File(this.template_path));
+            // var template = null;
+            // for (i = 0; i < app.documents.length; i++) {
+            //     // app.documents[i].source.indexOf(this.template_file_name());
+
+            //     if (app.documents[i].name == this.template_file_name() + ".psd") {
+            //         //the file you are looking for is already open
+            //         template = app.documents[i];
+            //         break;
+            //     }
+            // }
+
+            // TODO: if that's the file that's currently open, reset instead of opening? idk 
+            // can also go revert route, not sure which is faster?
+            // app.activeDocument.close(SaveOptions.DONOTSAVECHANGES);
         } catch (err) {
             throw new Error(
                 "\n\nFailed to open the template for this card at the following directory:\n\n"
-                + template_path
+                + this.template_path
                 + "\n\nCheck your templates folder and try again"
             );
         }
@@ -124,7 +122,6 @@ var BaseTemplate = Class({
         /**
          * Loads the specified art file into the specified layer.
          */
-
         paste_file(this.art_layer, this.file);
     },
     execute: function () {
@@ -172,11 +169,340 @@ var BaseTemplate = Class({
 
         if (size == "small") saveSmallImage(dir, this.getLongCardName());
         else savePngImage(dir, this.getLongCardName());
-    }
+
+        // Close the thing without saving
+        // app.activeDocument.close(SaveOptions.DONOTSAVECHANGES);
+    },
+    reset: function () {
+        clearHistory();
+    },
+    updateYear: function () {
+        var legalLayer = this.legal.layers.getByName(LayerNames.LEGAL);
+        replace_text(legalLayer, DEFAULT_YEAR, new Date().getFullYear());
+    },
+    updateLegalText: function () { },
+});
+
+var MysticalArchiveTemplate = Class({
+    /**
+     * A BaseTemplate with a few extra features I didn't want to pollute the base template for other people with.
+     */
+
+    extends_: BaseTemplate,
+    // TODO: add code for transform and mdfc stuff here (since both normal and planeswalker templates need to inherit them)
+    constructor: function (layout, file, file_path) {
+        this.super(layout, file, file_path);
+
+        this.colors = {
+            "W": ["eef0e5", "f9f6e5", "a2978a"],
+            "U": ["0082be", "065d8a", "074571"],
+            "B": ["6b6669", "38342e", "3f3f40"],
+            "R": ["de3628", "831618", "310204"],
+            "G": ["023a07", "057032", "001a00"],
+            "Colourless": ["806a5d", "b7a394", "5e5549"],
+            "Gold": ["bca426", "f1d77a", "7f6a32"],
+        };
+        for (var color in this.colors) {
+            for (var i = 0; i < this.colors[color].length; i++) {
+                this.colors[color][i] = hexToSolidColor(this.colors[color][i]);
+            }
+        }
+
+        this.is_creature = this.layout.power !== undefined && this.layout.toughness !== undefined;
+        this.is_legendary = this.layout.type_line.indexOf("Legendary") >= 0;
+        this.is_land = this.layout.type_line.indexOf("Land") >= 0;
+        this.is_companion = in_array(this.layout.frame_effects, "companion");
+    },
+    execute: function () {
+        /**
+         * Perform actions to populate this template. Load and frame artwork, enable frame layers, and execute all text layers.
+         * Returns the file name of the image w/ the template's suffix if it specified one.
+         * Don't override this method! You should be able to specify the full behaviour of the template in the constructor (making 
+         * sure to call this.super()) and enable_frame_layers().
+         */
+
+        this.open_template();
+        // only try to paste + scale art if it exists.
+        if (this.file && this.file.exists) {
+            this.load_artwork();
+            frame_layer(this.art_layer, this.art_reference);
+        }
+
+        this.enable_frame_layers();
+
+        // mana colors
+        // this.manaColors = {
+        //     "W": "7f6821",
+        //     "U": "008083",
+        //     "B": "34243c",
+        //     "R": "de361d",
+        //     "G": "057024",
+        //     "Colourless": "383423"
+        // };
+        mysticalArchiveMana(this.layout.mana_cost);
+
+        for (var i = 0; i < this.text_layers.length; i++) {
+            this.text_layers[i].execute();
+        }
+
+        var file_name = this.layout.name;
+        var suffix = this.template_suffix();
+        if (suffix !== "") {
+            file_name = file_name + " (" + suffix + ")";
+        }
+
+        return file_name;
+    },
+    open_template: function () {
+        this.super();
+        var docref = app.activeDocument;
+
+        this.art_reference = docref.layers.getByName(LayerNames.ART_FRAME);
+
+        this.name_shifted = this.layout.transform_icon !== null && this.layout.transform_icon !== undefined;
+        this.type_line_shifted = this.layout.color_indicator !== null && this.layout.color_indicator !== undefined;
+
+        var text_and_icons = docref.layers.getByName(LayerNames.TEXT_AND_ICONS);
+        this.basic_text_layers(text_and_icons);
+        this.rules_text_and_pt_layers(text_and_icons);
+    },
+    enable_frame_layers: function () {
+        var docref = app.activeDocument;
+
+        // pinlines
+        var pinlines = docref.layers.getByName(LayerNames.PINLINES);
+        var topPinlines = pinlines.layers.getByName("Top pinlines");
+        var circlePinlines = topPinlines.layers.getByName("Circle");
+        var flankingPinlines = pinlines.layers.getByName("Flanking pinlines");
+        var textboxPinlines = pinlines.layers.getByName("Textbox pinlines");
+        var outsidePinlines = textboxPinlines.layers.getByName("Outside");
+        var namePinlines = outsidePinlines.layers.getByName("Name pinlines");
+
+        var rightHighlight = circlePinlines.layers.getByName("Right highlight");
+        var leftHighlight = circlePinlines.layers.getByName("Left highlight");
+
+        var pinlineLayers = {
+            "left": {
+                1: [
+                    topPinlines.layers.getByName("Triangle left"),
+                    circlePinlines.layers.getByName("Left"),
+                    flankingPinlines.layers.getByName("Left typeline"),
+                ],
+                2: [
+                    topPinlines.layers.getByName("Curl off left"),
+                    textboxPinlines.layers.getByName("Above typeline left"),
+                    topPinlines.layers.getByName("Headpiece left"),
+                    topPinlines.layers.getByName("Below name left"),
+                ],
+                3: [textboxPinlines.layers.getByName("Typeline bg left")],
+                4: [namePinlines.layers.getByName("Left")],
+                5: [outsidePinlines.layers.getByName("Outside pinlines left")],
+            },
+            "right": {
+                1: [
+                    topPinlines.layers.getByName("Triangle right"),
+                    circlePinlines.layers.getByName("Right"),
+                    flankingPinlines.layers.getByName("Right typeline"),
+                ],
+                2: [
+                    topPinlines.layers.getByName("Curl off right"),
+                    textboxPinlines.layers.getByName("Above typeline right"),
+                    topPinlines.layers.getByName("Headpiece right"),
+                    topPinlines.layers.getByName("Below name right"),
+                ],
+                3: [textboxPinlines.layers.getByName("Typeline bg right")],
+                4: [namePinlines.layers.getByName("Right")],
+                5: [outsidePinlines.layers.getByName("Outside pinlines right")],
+            },
+        }
+
+        var singleColors = [];
+        for (var color in this.colors) {
+            singleColors.push(color);
+        }
+
+        var colors = { "left": [null, null], "right": [null, null] };
+
+        var c = [this.layout.pinlines, this.layout.background];
+        for (var i = 0; i < c.length; i++) {
+            if (in_array(singleColors, c[i])) {
+                colors["left"][i] = c[i];
+                colors["right"][i] = c[i];
+            } else {
+                colors["left"][i] = c[i][0];
+                colors["right"][i] = c[i][1];
+            }
+        }
+        
+        leftHighlight.visible = colors["left"][0] == "B";
+        rightHighlight.visible = colors["right"][0] == "B";
+
+        var layers = [
+            [[1, 1], [4, 0]],
+            [[2, 1], [3, 2], [5, 0]]
+        ];
+
+        for (var direction in colors) {
+            for (var colorIndex in layers) {
+                for (var layerGroupIndex in layers[colorIndex]) {
+                    var c = layers[colorIndex][layerGroupIndex];
+
+                    var layersToFill = pinlineLayers[direction][c[0]];
+                    var colorToUse = this.colors[colors[direction][colorIndex]][c[1]];
+
+                    for (var layerIndex = 0; layerIndex < layersToFill.length; layerIndex++) {
+                        fillSolidColorFillLayer(layersToFill[layerIndex], colorToUse);
+                    }
+                }
+            }
+        }
+    },
+    basic_text_layers: function (text_and_icons) {
+        /**
+         * Set up the card's mana cost, name (scaled to not overlap with mana cost), expansion symbol, and type line
+         * (scaled to not overlap with the expansion symbol).
+         */
+
+        // shift name and type line if necessary (hiding the unused layer)
+        var name = text_and_icons.layers.getByName(LayerNames.NAME);
+        var name_selected = name;
+        try {
+            // handle errors for templates where name_shift does not exist
+            var name_shift = text_and_icons.layers.getByName(LayerNames.NAME_SHIFT);
+            if (this.name_shifted) {
+                name_selected = name_shift;
+                name.visible = false;
+                name_shift.visible = true;
+            } else {
+                name_shift.visible = false;
+                name.visible = true;
+            }
+        } catch (err) { }
+
+        var type_line = text_and_icons.layers.getByName(LayerNames.TYPE_LINE);
+        var type_line_selected = type_line;
+        try {
+            // handle errors for templates where type_line_shift does not exist
+            var type_line_shift = text_and_icons.layers.getByName(LayerNames.TYPE_LINE_SHIFT);
+            if (this.type_line_shifted) {
+                type_line_selected = type_line_shift;
+                type_line.visible = false;
+                type_line_shift.visible = true;
+
+                // enable colour indicator dot
+                app.activeDocument.layers.getByName(LayerNames.color_indicator).layers.getByName(this.layout.pinlines).visible = true;
+            } else {
+                type_line_shift.visible = false;
+                type_line.visible = true;
+            }
+        } catch (err) { }
+
+        var expansion_symbol = text_and_icons.layers.getByName(LayerNames.EXPANSION_SYMBOL);
+        var manaCostGroup = text_and_icons.layers.getByName("Mana Cost Group");
+
+        this.text_layers = this.text_layers.concat([
+            // new BasicFormattedTextField(
+            //     layer = mana_cost,
+            //     text_contents = this.layout.mana_cost,
+            //     text_colour = rgb_black(),
+            // ),
+            new ScaledTextField(
+                layer = name_selected,
+                text_contents = this.layout.name,
+                text_colour = get_text_layer_colour(name_selected),
+                reference_layer = manaCostGroup,
+            ),
+            new ExpansionSymbolField(
+                layer = expansion_symbol,
+                text_contents = expansion_symbol_character,
+                rarity = this.layout.rarity,
+            ),
+            new ScaledTextField(
+                layer = type_line_selected,
+                text_contents = this.layout.type_line,
+                text_colour = get_text_layer_colour(type_line_selected),
+                reference_layer = expansion_symbol,
+            ),
+        ]);
+    },
+    rules_text_and_pt_layers: function (text_and_icons) {
+        /**
+         * Set up the card's rules text and power/toughness according to whether or not the card is a creature.
+         * You're encouraged to override this method if a template extending this one doesn't have the option for
+         * creating creature cards (e.g. miracles).
+         */
+
+        // centre the rules text if the card has no flavour text, text is all on one line, and that line is fairly short
+        var is_centred = this.layout.flavour_text.length <= 1 && this.layout.oracle_text.length <= 70 && this.layout.oracle_text.indexOf("\n") < 0;
+
+        var noncreature_copyright = this.legal.layers.getByName(LayerNames.NONCREATURE_COPYRIGHT);
+        var creature_copyright = this.legal.layers.getByName(LayerNames.CREATURE_COPYRIGHT);
+
+        noncreature_copyright.visible = !this.is_creature;
+        creature_copyright.visible = this.is_creature;
+
+        var power_toughness = text_and_icons.layers.getByName(LayerNames.POWER_TOUGHNESS);
+        var creature_rules_text = text_and_icons.layers.getByName(LayerNames.RULES_TEXT_CREATURE);
+        var non_creature_rules_text = text_and_icons.layers.getByName(LayerNames.RULES_TEXT_NONCREATURE);
+
+        creature_rules_text.visible = this.is_creature;
+        non_creature_rules_text.visible = !this.is_creature;
+        if (this.is_creature) {
+            // creature card - set up creature layer for rules text and insert power & toughness
+            this.text_layers = this.text_layers.concat([
+                new TextField(
+                    layer = power_toughness,
+                    text_contents = this.layout.power.toString() + "/" + this.layout.toughness.toString(),
+                    text_colour = get_text_layer_colour(power_toughness),
+                ),
+                new CreatureFormattedTextArea(
+                    layer = creature_rules_text,
+                    text_contents = this.layout.oracle_text,
+                    text_colour = get_text_layer_colour(creature_rules_text),
+                    flavour_text = this.layout.flavour_text,
+                    is_centred = is_centred,
+                    reference_layer = text_and_icons.layers.getByName(LayerNames.TEXTBOX_REFERENCE),
+                    pt_reference_layer = text_and_icons.layers.getByName(LayerNames.PT_REFERENCE),
+                    pt_top_reference_layer = text_and_icons.layers.getByName(LayerNames.PT_TOP_REFERENCE),
+                ),
+            ]);
+        } else {
+            // noncreature card - use the normal rules text layer and disable the power/toughness layer
+            this.text_layers.push(
+                new FormattedTextArea(
+                    layer = non_creature_rules_text,
+                    text_contents = this.layout.oracle_text,
+                    text_colour = get_text_layer_colour(non_creature_rules_text),
+                    flavour_text = this.layout.flavour_text,
+                    is_centred = is_centred,
+                    reference_layer = text_and_icons.layers.getByName(LayerNames.TEXTBOX_REFERENCE),
+                ),
+            );
+
+            power_toughness.visible = false;
+        }
+    },
+    paste_scryfall_scan: function (reference_layer, file_path, rotate) {
+        /**
+         * Downloads the card's scryfall scan, pastes it into the document next to the active layer, and frames it to fill
+         * the given reference layer. Can optionally rotate the layer by 90 degrees (useful for planar cards).
+         */
+        var layer = create_new_layer("New Layer");
+        paste_file(layer, this.file);
+
+        // paste_file(this.art_layer, this.file);
+        // var layer = insert_scryfall_scan(this.layout.scryfall_scan, file_path);
+        if (rotate === true) {
+            layer.rotate(90);
+        }
+        frame_layer(layer, reference_layer);
+    },
+    template_file_name: function () {
+        return "mystical archive - fireantprincess_scaled-2";
+    },
 });
 
 /* Class definitions for Chilli_Axe templates */
-
 var ChilliBaseTemplate = Class({
     /**
      * A BaseTemplate with a few extra features I didn't want to pollute the base template for other people with.
@@ -225,7 +551,7 @@ var ChilliBaseTemplate = Class({
                 type_line_shift.visible = true;
 
                 // enable colour indicator dot
-                app.activeDocument.layers.getByName(LayerNames.COLOUR_INDICATOR).layers.getByName(this.layout.pinlines).visible = true;
+                app.activeDocument.layers.getByName(LayerNames.color_indicator).layers.getByName(this.layout.pinlines).visible = true;
             } else {
                 type_line_shift.visible = false;
                 type_line.visible = true;
@@ -283,15 +609,13 @@ var ChilliBaseTemplate = Class({
         paste_file(layer, this.file);
 
         // paste_file(this.art_layer, this.file);
-        // log(this.layout.scryfall_scan);
-        // log(file_path);
         // var layer = insert_scryfall_scan(this.layout.scryfall_scan, file_path);
         if (rotate === true) {
             layer.rotate(90);
         }
         frame_layer(layer, reference_layer);
     }
-})
+});
 
 var NormalTemplate = Class({
     /**
@@ -315,6 +639,9 @@ var NormalTemplate = Class({
         var noncreature_copyright = this.legal.layers.getByName(LayerNames.NONCREATURE_COPYRIGHT);
         var creature_copyright = this.legal.layers.getByName(LayerNames.CREATURE_COPYRIGHT);
 
+        noncreature_copyright.visible = !this.is_creature;
+        creature_copyright.visible = this.is_creature;
+
         var power_toughness = text_and_icons.layers.getByName(LayerNames.POWER_TOUGHNESS);
         if (this.is_creature) {
             // creature card - set up creature layer for rules text and insert power & toughness
@@ -336,9 +663,6 @@ var NormalTemplate = Class({
                     pt_top_reference_layer = text_and_icons.layers.getByName(LayerNames.PT_TOP_REFERENCE),
                 ),
             ]);
-
-            noncreature_copyright.visible = false;
-            creature_copyright.visible = true;
         } else {
             // noncreature card - use the normal rules text layer and disable the power/toughness layer
             var rules_text = text_and_icons.layers.getByName(LayerNames.RULES_TEXT_NONCREATURE);
@@ -359,7 +683,7 @@ var NormalTemplate = Class({
     // constructor: function (layout, file, file_path) {
     //     this.super(layout, file, file_path);
     // },
-    open_template: function() {
+    open_template: function () {
         this.super();
         var docref = app.activeDocument;
 
@@ -367,7 +691,7 @@ var NormalTemplate = Class({
         if (this.layout.is_colourless) this.art_reference = docref.layers.getByName(LayerNames.FULL_ART_FRAME);
 
         this.name_shifted = this.layout.transform_icon !== null && this.layout.transform_icon !== undefined;
-        this.type_line_shifted = this.layout.colour_indicator !== null && this.layout.colour_indicator !== undefined;
+        this.type_line_shifted = this.layout.color_indicator !== null && this.layout.color_indicator !== undefined;
 
         var text_and_icons = docref.layers.getByName(LayerNames.TEXT_AND_ICONS);
         this.basic_text_layers(text_and_icons);
@@ -418,6 +742,15 @@ var NormalTemplate = Class({
             this.enable_hollow_crown(crown, pinlines);
         }
     },
+    updateLegalText: function () {
+        var nonCreatureCopyright = this.legal.layers.getByName(LayerNames.NONCREATURE_COPYRIGHT);
+        var creatureCopyright = this.legal.layers.getByName(LayerNames.CREATURE_COPYRIGHT);
+        var layersWithCopyright = [nonCreatureCopyright, creatureCopyright];
+
+        for (var i = 0; i < layersWithCopyright.length; i++) {
+            layersWithCopyright[i].textItem.contents = COPYRIGHT_TEXT;
+        }
+    },
 });
 
 /* Classic variant */
@@ -436,14 +769,14 @@ var NormalClassicTemplate = Class({
     // constructor: function (layout, file, file_path) {
     //     this.super(layout, file, file_path);
     // },
-    open_template: function() {
+    open_template: function () {
         this.super();
 
         var docref = app.activeDocument;
         this.art_reference = docref.layers.getByName(LayerNames.ART_FRAME);
 
         // artist
-        replace_text(docref.layers.getByName(LayerNames.LEGAL).layers.getByName(LayerNames.ARTIST), "Artist", this.layout.artist);
+        replace_text(docref.layers.getByName(LayerNames.LEGAL).layers.getByName(LayerNames.ARTIST), LayerDefaults.ARTIST, this.layout.artist);
         this.text_layers = [];
 
         var text_and_icons = docref.layers.getByName(LayerNames.TEXT_AND_ICONS);
@@ -749,7 +1082,7 @@ var TransformBackTemplate = Class({
     // constructor: function (layout, file, file_path) {
     //     this.super(layout, file, file_path);
     // },
-    open_template: function() {
+    open_template: function () {
         this.super();
         // set transform icon
         var transform_group = app.activeDocument.layers.getByName(LayerNames.TEXT_AND_ICONS).layers.getByName(this.dfc_layer_group());
@@ -793,7 +1126,7 @@ var TransformFrontTemplate = Class({
         this.other_face_is_creature = layout.other_face_power !== undefined && layout.other_face_toughness !== undefined;
         this.super(layout, file, file_path);
     },
-    open_template: function() {
+    open_template: function () {
         this.super();
         // if creature on back face, set flipside power/toughness
         if (this.other_face_is_creature) {
@@ -815,6 +1148,9 @@ var TransformFrontTemplate = Class({
 
         var noncreature_copyright = this.legal.layers.getByName(LayerNames.NONCREATURE_COPYRIGHT);
         var creature_copyright = this.legal.layers.getByName(LayerNames.CREATURE_COPYRIGHT);
+
+        noncreature_copyright.visible = !this.is_creature;
+        creature_copyright.visible = this.is_creature;
 
         var power_toughness = text_and_icons.layers.getByName(LayerNames.POWER_TOUGHNESS);
         if (this.is_creature) {
@@ -840,9 +1176,6 @@ var TransformFrontTemplate = Class({
                     pt_top_reference_layer = text_and_icons.layers.getByName(LayerNames.PT_TOP_REFERENCE),
                 ),
             ]);
-
-            noncreature_copyright.visible = false;
-            creature_copyright.visible = true;
         } else {
             // noncreature card - use the normal rules text layer and disable the power/toughness layer
             var rules_text = text_and_icons.layers.getByName(LayerNames.RULES_TEXT_NONCREATURE);
@@ -932,7 +1265,7 @@ var MDFCBackTemplate = Class({
     // constructor: function (layout, file, file_path) {
     //     this.super(layout, file, file_path);
     // },
-    open_template: function() {
+    open_template: function () {
         this.super();
 
         // set visibility of top & bottom mdfc elements and set text of left & right text
@@ -1022,7 +1355,7 @@ var AdventureTemplate = Class({
     // constructor: function (layout, file, file_path) {
     //     this.super(layout, file, file_path);
     // },
-    open_template: function() {
+    open_template: function () {
         this.super();
 
         // add adventure name, mana cost, type line, and rules text fields to this.text_layers
@@ -1148,7 +1481,7 @@ var SagaTemplate = Class({
     // constructor: function (layout, file, file_path) {
     //     this.super(layout, file, file_path);
     // },
-    open_template: function() {
+    open_template: function () {
         this.super();
         // paste scryfall scan
         app.activeDocument.activeLayer = app.activeDocument.layers.getByName(LayerNames.TWINS);
@@ -1201,7 +1534,7 @@ var PlaneswalkerTemplate = Class({
         this.super(layout, file, file_path);
         exit_early = true;
     },
-    open_template: function() {
+    open_template: function () {
         this.super();
         this.art_reference = app.activeDocument.layers.getByName(LayerNames.PLANESWALKER_ART_FRAME);
         if (this.layout.is_colourless) this.art_reference = app.activeDocument.layers.getByName(LayerNames.FULL_ART_FRAME);
@@ -1275,8 +1608,8 @@ var PlaneswalkerTemplate = Class({
         );
 
         // paste scryfall scan
-        app.activeDocument.activeLayer = this.docref.layers.getByName(LayerNames.TEXTBOX);
-        this.paste_scryfall_scan(app.activeDocument.layers.getByName(LayerNames.SCRYFALL_SCAN_FRAME), this.file);
+        // app.activeDocument.activeLayer = this.docref.layers.getByName(LayerNames.TEXTBOX);
+        // this.paste_scryfall_scan(app.activeDocument.layers.getByName(LayerNames.SCRYFALL_SCAN_FRAME), this.file);
     },
     enable_frame_layers: function () {
         // twins and pt box
@@ -1294,6 +1627,10 @@ var PlaneswalkerTemplate = Class({
     enable_background: function () {
         var background = this.docref.layers.getByName(LayerNames.BACKGROUND);
         background.layers.getByName(this.layout.background).visible = true;
+    },
+    updateLegalText: function () {
+        var legalLayer = this.legal.layers.getByName(LayerNames.PLANESWALKER_COPYRIGHT);
+        legalLayer.textItem.contents = COPYRIGHT_TEXT;
     }
 });
 
@@ -1320,13 +1657,13 @@ var PlanarTemplate = Class({
         this.super(layout, file, file_path);
         exit_early = true;
     },
-    open_template: function() {
+    open_template: function () {
         this.super();
 
         var docref = app.activeDocument;
         this.art_reference = docref.layers.getByName(LayerNames.ART_FRAME);
         // artist
-        replace_text(docref.layers.getByName(LayerNames.LEGAL).layers.getByName(LayerNames.ARTIST), "Artist", this.layout.artist);
+        replace_text(docref.layers.getByName(LayerNames.LEGAL).layers.getByName(LayerNames.ARTIST), LayerDefaults.ARTIST, this.layout.artist);
 
         // card name, type line, expansion symbol
         var text_and_icons = docref.layers.getByName(LayerNames.TEXT_AND_ICONS);
@@ -1399,16 +1736,16 @@ var TokenTemplate = Class({
      */
 
     extends_: BaseTemplate,
-    template_file_name: function() {
+    template_file_name: function () {
         return "token";
     },
-    constructor: function(layout, file, file_path) {
+    constructor: function (layout, file, file_path) {
         this.super(layout, file, file_path);
 
         this.is_creature = this.layout.power !== undefined && this.layout.toughness !== undefined;
         this.is_legendary = this.layout.type_line.indexOf("Legendary") >= 0;
     },
-    open_template: function() {
+    open_template: function () {
         this.super();
         var docref = app.activeDocument;
 
@@ -1426,6 +1763,10 @@ var TokenTemplate = Class({
         var power_toughness_layer = text_and_icons.layers.getByName(LayerNames.POWER_TOUGHNESS);
         var noncreature_copyright = this.legal.layers.getByName(LayerNames.NONCREATURE_COPYRIGHT);
         var creature_copyright = this.legal.layers.getByName(LayerNames.CREATURE_COPYRIGHT);
+
+        noncreature_copyright.visible = !this.is_creature;
+        creature_copyright.visible = this.is_creature;
+
         if (this.is_creature) {
             this.text_layers.push(
                 new TextField(
@@ -1436,16 +1777,12 @@ var TokenTemplate = Class({
             );
             docref.activeLayer = type_line_and_rules_text;
             enable_active_vector_mask();
-            noncreature_copyright.visible = false;
-            creature_copyright.visible = true;
         } else {
             power_toughness_layer.visible = false;
             docref.activeLayer = type_line_and_rules_text;
             disable_active_vector_mask();
-            noncreature_copyright.visible = true;
-            creature_copyright.visible = false;
         }
-        
+
         var rules_text_group;
         if (this.layout.oracle_text === "" & this.layout.flavour_text === "") {
             rules_text_group = type_line_and_rules_text.layers.getByName(LayerNames.FULL_ART);
@@ -1519,7 +1856,7 @@ var BasicLandTemplate = Class({
         this.super(layout, file, file_path);
 
     },
-    open_template: function() {
+    open_template: function () {
         this.super();
         this.art_reference = app.activeDocument.layers.getByName(LayerNames.BASIC_ART_FRAME);
     },
@@ -1560,3 +1897,4 @@ var BasicLandClassicTemplate = Class({
         return "basic-classic";
     },
 });
+

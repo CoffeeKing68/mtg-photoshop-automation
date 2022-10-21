@@ -17,28 +17,33 @@ var filePath = File($.fileName).parent.parent.fsName;
 
 function main2() {
     var decklistNames = [
-        "BRAN", "DANY", "OTHERs",
+        "BRAN",
+        "DANY",
+        "OTHERs",
         "BLOODRAVEN", "TITANIA", "STONEHEART",
         "OBEKA", "IRON_BANK", "MAEGOR",
         "VISENYA", "UG_FLASH", "MODERN",
-        "TOKENS",
+        "ELD1",
+        "ELD2",
+        "VINTAGE",
+        "TOKENS", 
+        "STA"
     ];
 
     for (var i = 0; i < decklistNames.length; i++) {
         var decklistPath = filePath + "/decklists/" + decklistNames[i] + ".json";
         var deckJson = loadJson(decklistPath);
 
-        for (cardIndex = 0; cardIndex < deckJson.length; cardIndex++) {
+        for (var cardIndex = 0; cardIndex < deckJson.length; cardIndex++) {
             exitOnKeyboardInterrupt();
             var card = deckJson[cardIndex];
-
             exportCard(card);
         }
     }
 }
 
 function exportCard(card) {
-    // fixes for scryfall codes
+    // log(card.name);
     card.oracle_text = card.text ? card.text : "";
     card.flavour_text = (card.flavor) ? card.flavor : "";
     card.power = (card.power != null) ? card.power : undefined;
@@ -47,7 +52,16 @@ function exportCard(card) {
     card.image_uris = { large: null };
     card.type_line = card.type;
     if (card.mana_cost == null) card.mana_cost = "";
-    
+
+    // card.mana_cost = "{2}{W}{U}{B}{R}{G}"
+    // card.mana_cost = "{G/W}{2/B}{G/U/P}"
+    // card.mana_cost = "{2}{R}{W/P}{S}"
+
+    var size = "large";
+    if (card.layout == "transform" && card.frame_effects == null) {
+        card.frame_effects = ["sunmoondfc"];
+    }
+
     // rarity fix
     var rarity_map = {
         "M": rarity_mythic,
@@ -55,7 +69,7 @@ function exportCard(card) {
         "U": rarity_uncommon,
         "C": rarity_common
     }
-    
+
     if (rarity_map.hasOwnProperty(card.rarity)) card.rarity = rarity_map[card.rarity];
 
     // instantiate layout obj (unpacks scryfall json and stores relevant parts in obj properties)
@@ -64,36 +78,81 @@ function exportCard(card) {
     } else {
         log([">>>>>>>>> No layout found", card.name]);
         return false;
-        // throw new Error("Layout" + card.layout + " is not supported. Sorry!");
     }
 
     layout.artist = card.artist;
 
     // select and execute the template - insert text fields, set visibility of layers, etc. - and save to disk
     var originalArtFile = new File(card.image_location);
+    var smallArtFile = new File(
+        'D:\\Gigapixel\\2022_01_30\\' +
+        originalArtFile.name.split(".")[0] +
+        ".png"
+    );
     var moveArtFile = new File(
-        'D:\\Gigapixel\\2022_01_30\\gigapixel\\scaled_' +
-        originalArtFile.name.split(".")[0] + 
+        'D:\\Gigapixel\\2022_01_30\\__scaled\\scaled_' +
+        originalArtFile.name.split(".")[0] +
         "-art-scale-4_00x.png"
     );
+    // var moveArtFile = new File('D:\\Gigapixel\\2022_01_30\\' + originalArtFile.name);
     // overrides
     var temp = getTemplateClass(layout, card);
     var templateName = temp[0];
     var templateClass = temp[1];
-    
+
     var template = new templateClass(layout, moveArtFile, templateLocation);
-    var size = "large";
 
+    var renderDone = (new File(filePath + "/out/done/" + template.getLongCardName() + ".png")).exists ||
+        (new File(filePath + "/out/done_adjustments_1/" + template.getLongCardName() + ".png")).exists;
 
-    if (!template.renderExists(size)) {
-        log([card.name, templateName]);
-        // layout, ArtFileObj, relativePath
- 
-        template.execute();
-        template.saveCard(size);
-    } else {
-        // log(["skipping", card.name, templateName]);
+    var cardIdsToSkip = [
+        "68dce077-4ecd-406a-9052-05d5485ffa6f"
+    ];
+
+    var imageToBeReplaced = new File(
+        'D:\\Gigapixel\\2022_01_30\\imagesToBeReplaced\\_' +
+        originalArtFile.name.split(".")[0] +
+        ".png"
+    );
+    if (imageToBeReplaced.exists) {
+        log(card.name);
     }
+    // if (card.name == "Time Warp") {
+    //     log(card.name);
+    //     log(template.renderExists(size));
+    //     log(card.number);
+    //     log(card.set);
+    //     log(moveArtFile.exists);
+    //     log(card.printed_name);
+    // }
+    // if (
+    //     smallArtFile.exists &&
+    //     !moveArtFile.exists
+    //     // !template.renderExists(size)
+    //     // && !renderDone
+    //     // && (parseInt(card.number) < 64 || card.set == "SLD")
+    //     // // && card.is_personal == false
+    //     // && card.printed_name == null
+    //     // && moveArtFile.exists
+    //     // && (card.set != "STA" && !in_array(STAIds, card.id))
+    //     // && templateName == "WomensDay"
+    //     // && !in_array(cardIdsToSkip, card.id)
+    // ) {
+    //     log([card.name, templateName]);
+    //     // log(card.number);
+    //     // log(parseInt(card.number));
+    //     // log(parseInt(card.number) < 66);
+    //     // exit();
+
+    //     // clearHistory();
+    //     // template.execute();
+    //     // log(template.getLongCardName());
+    //     // template.saveCard(size);
+
+    //     // exit();
+    // } else {
+    //     // log("Exists, skipping");
+    // }
 }
 
 function cardIsBasic(card) {
@@ -102,10 +161,28 @@ function cardIsBasic(card) {
 
 function main() {
     makeLogFile();
-
     try {
-        // runAllFrameLogicTests();
+        // var manaCost = "{2}{G/W}{G/W}{G/W}";
+        // var symbol_regex = /(\{.*?\})/g;
+        // var symbol_indices = [];
+        // match = symbol_regex.exec(manaCost);
+        // log(manaCost.split("}{"));
+        // var match = null;
+        // while (true) {
+        //     match = symbol_regex.exec(manaCost);
+        //     if (match === null) {
+        //         break;
+        //     } else {
+        //         var symbol = match[1];
+        //     }
+        // }
+        // logObj(locate_symbols(manaCost));
+        // var matches = manaCost.match(/\{(.?+)\}/g)
+        // log(matches.length)
+        // log(matches[0])
+        // log(matches);
         main2();
+        // runAllFrameLogicTests();
     } catch (error) {
         log("Error occurred");
         log(error.message);
@@ -177,7 +254,7 @@ function buildTemplateMap() {
         other: [],
     };
     class_template_map[basic_class] = {
-        default_:  BasicLandTherosTemplate,
+        default_: BasicLandTherosTemplate,
         other: [
             BasicLandTemplate,
             BasicLandClassicTemplate,
@@ -199,7 +276,6 @@ function buildTemplateMap() {
 function getTemplateClass(layout, card) {
     var templateMap = buildTemplateMap();
     var artSize = card.art_size;
-    // var templateClass = null;
 
     if (layout.card_class == basic_class) {
         return ["BasicLandTheros", BasicLandTherosTemplate];
@@ -218,27 +294,20 @@ function getTemplateClass(layout, card) {
             artSize == "fullart" && card.type.indexOf('Land') >= 0) {
             // ExpeditionTemplate => (zendikar landa and fullart)
             // templateClass = ExpeditionTemplate;
-            return ["Expedition", ExpeditionTemplate]
+            return ["WomensDay", WomensDayTemplate];
+            // return ["Expedition", ExpeditionTemplate]
             // templateClass = "Expedition";
         } else if (in_array(["MPS"], card.set) && artSize == "fullart") {
-            // MasterpieceTemplate => (mps and fullart)
-            // templateClass = MasterpieceTemplate;
-            // templateClass = "Masterpiece";
             return ["Masterpiece", MasterpieceTemplate];
+        } else if ("STA" == card.set || (card.set == "SLD" && (card.number >= 268 && card.number <= 273))) {
+            return ["MysticalArchive", MysticalArchiveTemplate];
         } else {
             // not set specific
             if (artSize == "fullart") {
-                // templateClass = WomensDayTemplate;
-                // templateClass = "WomensDay";
                 return ["WomensDay", WomensDayTemplate];
             } else if (artSize == "extended") {
-                // templateClass = NormalExtendedTemplate;
-                // templateClass = "NormalExtended";
                 return ["NormalExtended", NormalExtendedTemplate];
             } else {
-                // templateClass = "Normal";
-                // templateClass = NormalTemplate;
-                // NormalClassicTemplate => 
                 return ["Normal", NormalTemplate];
             }
         }
