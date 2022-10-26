@@ -38,16 +38,20 @@ var Template = Class({
 */
 
 var BaseTemplate = Class({
-    constructor: function (layout, file, file_path) {
+    constructor: function (layout, file, file_path, templatePath) {
         /**
          * Set up variables for things which are common to all templates (artwork and artist credit).
          * Classes extending this base class are expected to populate the following properties at minimum: this.art_reference
          */
-
+        // log("templatePath");
+        // log(templatePath);
+        // exit();
         this.layout = layout;
         this.file = file;
         this.file_path = file_path;
-        this.template_path = file_path + "/" + this.template_file_name() + ".psd";
+        this.template_path = templatePath + "/" + this.template_file_name() + ".psd";
+        // log("this.template_path");
+        // log(this.template_path);
     },
     open_template: function () {
         this.load_template();
@@ -88,6 +92,7 @@ var BaseTemplate = Class({
          * Opens the template's PSD file in Photoshop.
          */
         try {
+            log(this.template_path);
             app.open(new File(this.template_path));
             // var template = null;
             // for (i = 0; i < app.documents.length; i++) {
@@ -190,8 +195,8 @@ var MysticalArchiveTemplate = Class({
 
     extends_: BaseTemplate,
     // TODO: add code for transform and mdfc stuff here (since both normal and planeswalker templates need to inherit them)
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
+    constructor: function (layout, file, file_path, templatePath) {
+        this.super(layout, file, file_path, templatePath);
 
         this.colors = {
             "W": ["eef0e5", "f9f6e5", "a2978a"],
@@ -200,7 +205,9 @@ var MysticalArchiveTemplate = Class({
             "R": ["de3628", "831618", "310204"],
             "G": ["023a07", "057032", "001a00"],
             "Colourless": ["806a5d", "b7a394", "5e5549"],
-            "Gold": ["bca426", "f1d77a", "7f6a32"],
+            "Gold": ["bca426", "cabc5c", "7f6a32"],
+            
+            // bca426, dece86
         };
         for (var color in this.colors) {
             for (var i = 0; i < this.colors[color].length; i++) {
@@ -230,15 +237,6 @@ var MysticalArchiveTemplate = Class({
 
         this.enable_frame_layers();
 
-        // mana colors
-        // this.manaColors = {
-        //     "W": "7f6821",
-        //     "U": "008083",
-        //     "B": "34243c",
-        //     "R": "de361d",
-        //     "G": "057024",
-        //     "Colourless": "383423"
-        // };
         mysticalArchiveMana(this.layout.mana_cost);
 
         for (var i = 0; i < this.text_layers.length; i++) {
@@ -510,8 +508,8 @@ var ChilliBaseTemplate = Class({
 
     extends_: BaseTemplate,
     // TODO: add code for transform and mdfc stuff here (since both normal and planeswalker templates need to inherit them)
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
+    constructor: function (layout, file, file_path, templatePath) {
+        this.super(layout, file, file_path, templatePath);
 
         this.is_creature = this.layout.power !== undefined && this.layout.toughness !== undefined;
         this.is_legendary = this.layout.type_line.indexOf("Legendary") >= 0;
@@ -643,9 +641,15 @@ var NormalTemplate = Class({
         creature_copyright.visible = this.is_creature;
 
         var power_toughness = text_and_icons.layers.getByName(LayerNames.POWER_TOUGHNESS);
+        
+        var creature_rules_text = text_and_icons.layers.getByName(LayerNames.RULES_TEXT_CREATURE);
+        var non_creature_rules_text = text_and_icons.layers.getByName(LayerNames.RULES_TEXT_NONCREATURE);
+
+        creature_rules_text.visible = this.is_creature;
+        non_creature_rules_text.visible = !this.is_creature;
+
         if (this.is_creature) {
             // creature card - set up creature layer for rules text and insert power & toughness
-            var rules_text = text_and_icons.layers.getByName(LayerNames.RULES_TEXT_CREATURE);
             this.text_layers = this.text_layers.concat([
                 new TextField(
                     layer = power_toughness,
@@ -653,9 +657,9 @@ var NormalTemplate = Class({
                     text_colour = get_text_layer_colour(power_toughness),
                 ),
                 new CreatureFormattedTextArea(
-                    layer = rules_text,
+                    layer = creature_rules_text,
                     text_contents = this.layout.oracle_text,
-                    text_colour = get_text_layer_colour(rules_text),
+                    text_colour = get_text_layer_colour(creature_rules_text),
                     flavour_text = this.layout.flavour_text,
                     is_centred = is_centred,
                     reference_layer = text_and_icons.layers.getByName(LayerNames.TEXTBOX_REFERENCE),
@@ -665,12 +669,11 @@ var NormalTemplate = Class({
             ]);
         } else {
             // noncreature card - use the normal rules text layer and disable the power/toughness layer
-            var rules_text = text_and_icons.layers.getByName(LayerNames.RULES_TEXT_NONCREATURE);
             this.text_layers.push(
                 new FormattedTextArea(
-                    layer = rules_text,
+                    layer = non_creature_rules_text,
                     text_contents = this.layout.oracle_text,
-                    text_colour = get_text_layer_colour(rules_text),
+                    text_colour = get_text_layer_colour(non_creature_rules_text),
                     flavour_text = this.layout.flavour_text,
                     is_centred = is_centred,
                     reference_layer = text_and_icons.layers.getByName(LayerNames.TEXTBOX_REFERENCE),
@@ -766,9 +769,6 @@ var NormalClassicTemplate = Class({
     template_suffix: function () {
         return "Classic";
     },
-    // constructor: function (layout, file, file_path) {
-    //     this.super(layout, file, file_path);
-    // },
     open_template: function () {
         this.super();
 
@@ -842,10 +842,10 @@ var NormalExtendedTemplate = Class({
     template_suffix: function () {
         return "Extended";
     },
-    constructor: function (layout, file, file_path) {
+    constructor: function (layout, file, file_path, templatePath) {
         // strip out reminder text for extended cards
         layout.oracle_text = strip_reminder_text(layout.oracle_text);
-        this.super(layout, file, file_path);
+        this.super(layout, file, file_path, templatePath);
     }
 });
 
@@ -863,10 +863,10 @@ var WomensDayTemplate = Class({
     template_suffix: function () {
         return "Showcase";
     },
-    constructor: function (layout, file, file_path) {
+    constructor: function (layout, file, file_path, templatePath) {
         // strip out reminder text
         layout.oracle_text = strip_reminder_text(layout.oracle_text);
-        this.super(layout, file, file_path);
+        this.super(layout, file, file_path, templatePath);
     },
     enable_frame_layers: function () {
         var docref = app.activeDocument;
@@ -909,10 +909,10 @@ var StargazingTemplate = Class({
     template_suffix: function () {
         return "Stargazing";
     },
-    constructor: function (layout, file, file_path) {
+    constructor: function (layout, file, file_path, templatePath) {
         layout.oracle_text = strip_reminder_text(layout.oracle_text);
         layout.is_nyx = true;
-        this.super(layout, file, file_path);
+        this.super(layout, file, file_path, templatePath);
     }
 });
 
@@ -928,13 +928,13 @@ var MasterpieceTemplate = Class({
     template_suffix: function () {
         return "Masterpiece";
     },
-    constructor: function (layout, file, file_name) {
+    constructor: function (layout, file, file_name, templatePath) {
         is_colourless = false;
         // force to use bronze twins and background
         layout.twins = "Bronze";
         layout.background = "Bronze";
         layout.oracle_text = strip_reminder_text(layout.oracle_text);
-        this.super(layout, file, file_name);
+        this.super(layout, file, file_name, templatePath);
     },
     enable_frame_layers: function () {
         this.super();
@@ -960,10 +960,10 @@ var ExpeditionTemplate = Class({
     template_suffix: function () {
         return "Expedition";
     },
-    constructor: function (layout, file, file_path) {
+    constructor: function (layout, file, file_path, templatePath) {
         // strip out reminder text
         layout.oracle_text = strip_reminder_text(layout.oracle_text);
-        this.super(layout, file, file_path);
+        this.super(layout, file, file_path, templatePath);
     },
     basic_text_layers: function (text_and_icons) {
         var name = text_and_icons.layers.getByName(LayerNames.NAME);
@@ -1079,9 +1079,6 @@ var TransformBackTemplate = Class({
     dfc_layer_group: function () {
         return LayerNames.TF_BACK;
     },
-    // constructor: function (layout, file, file_path) {
-    //     this.super(layout, file, file_path);
-    // },
     open_template: function () {
         this.super();
         // set transform icon
@@ -1122,9 +1119,9 @@ var TransformFrontTemplate = Class({
     dfc_layer_group: function () {
         return LayerNames.TF_FRONT;
     },
-    constructor: function (layout, file, file_path) {
+    constructor: function (layout, file, file_path, templatePath) {
         this.other_face_is_creature = layout.other_face_power !== undefined && layout.other_face_toughness !== undefined;
-        this.super(layout, file, file_path);
+        this.super(layout, file, file_path, templatePath);
     },
     open_template: function () {
         this.super();
@@ -1262,9 +1259,6 @@ var MDFCBackTemplate = Class({
     dfc_layer_group: function () {
         return LayerNames.MDFC_BACK;
     },
-    // constructor: function (layout, file, file_path) {
-    //     this.super(layout, file, file_path);
-    // },
     open_template: function () {
         this.super();
 
@@ -1317,13 +1311,13 @@ var MutateTemplate = Class({
     template_file_name: function () {
         return "mutate";
     },
-    constructor: function (layout, file, file_path) {
+    constructor: function (layout, file, file_path, templatePath) {
         // split this.layout.oracle_text between mutate text and actual text before calling this.super()
         var split_rules_text = layout.oracle_text.split("\n");
         layout.mutate_text = split_rules_text[0];
         layout.oracle_text = split_rules_text.slice(1, split_rules_text.length).join("\n");
 
-        this.super(layout, file, file_path);
+        this.super(layout, file, file_path, templatePath);
 
         var docref = app.activeDocument;
         var text_and_icons = docref.layers.getByName(LayerNames.TEXT_AND_ICONS);
@@ -1352,9 +1346,6 @@ var AdventureTemplate = Class({
     template_file_name: function () {
         return "adventure";
     },
-    // constructor: function (layout, file, file_path) {
-    //     this.super(layout, file, file_path);
-    // },
     open_template: function () {
         this.super();
 
@@ -1478,9 +1469,6 @@ var SagaTemplate = Class({
     template_file_name: function () {
         return "saga";
     },
-    // constructor: function (layout, file, file_path) {
-    //     this.super(layout, file, file_path);
-    // },
     open_template: function () {
         this.super();
         // paste scryfall scan
@@ -1530,8 +1518,8 @@ var PlaneswalkerTemplate = Class({
     template_file_name: function () {
         return "pw";
     },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
+    constructor: function (layout, file, file_path, templatePath) {
+        this.super(layout, file, file_path, templatePath);
         exit_early = true;
     },
     open_template: function () {
@@ -1653,8 +1641,8 @@ var PlanarTemplate = Class({
     template_file_name: function () {
         return "planar";
     },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
+    constructor: function (layout, file, file_path, templatePath) {
+        this.super(layout, file, file_path, templatePath);
         exit_early = true;
     },
     open_template: function () {
@@ -1739,8 +1727,8 @@ var TokenTemplate = Class({
     template_file_name: function () {
         return "token";
     },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
+    constructor: function (layout, file, file_path, templatePath) {
+        this.super(layout, file, file_path, templatePath);
 
         this.is_creature = this.layout.power !== undefined && this.layout.toughness !== undefined;
         this.is_legendary = this.layout.type_line.indexOf("Legendary") >= 0;
@@ -1851,10 +1839,6 @@ var BasicLandTemplate = Class({
     },
     template_suffix: function () {
         return this.layout.artist;
-    },
-    constructor: function (layout, file, file_path) {
-        this.super(layout, file, file_path);
-
     },
     open_template: function () {
         this.super();

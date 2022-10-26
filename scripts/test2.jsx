@@ -1,3 +1,4 @@
+// "templateLocation": "../new_templates",
 // var templateLocation is set in run_script.py
 // main(); is called
 var MACOS = File.fs == "Macintosh";
@@ -23,16 +24,17 @@ function main2() {
         "BLOODRAVEN", "TITANIA", "STONEHEART",
         "OBEKA", "IRON_BANK", "MAEGOR",
         "VISENYA", "UG_FLASH", "MODERN",
-        "ELD1",
-        "ELD2",
+        // "ELD1",
+        // "ELD2",
         "VINTAGE",
-        "TOKENS", 
-        "STA"
+        // "TOKENS", 
+        // "STA"
     ];
 
     for (var i = 0; i < decklistNames.length; i++) {
         var decklistPath = filePath + "/decklists/" + decklistNames[i] + ".json";
         var deckJson = loadJson(decklistPath);
+        // log(decklistNames[i]);
 
         for (var cardIndex = 0; cardIndex < deckJson.length; cardIndex++) {
             exitOnKeyboardInterrupt();
@@ -52,10 +54,6 @@ function exportCard(card) {
     card.image_uris = { large: null };
     card.type_line = card.type;
     if (card.mana_cost == null) card.mana_cost = "";
-
-    // card.mana_cost = "{2}{W}{U}{B}{R}{G}"
-    // card.mana_cost = "{G/W}{2/B}{G/U/P}"
-    // card.mana_cost = "{2}{R}{W/P}{S}"
 
     var size = "large";
     if (card.layout == "transform" && card.frame_effects == null) {
@@ -84,75 +82,95 @@ function exportCard(card) {
 
     // select and execute the template - insert text fields, set visibility of layers, etc. - and save to disk
     var originalArtFile = new File(card.image_location);
-    var smallArtFile = new File(
-        'D:\\Gigapixel\\2022_01_30\\' +
-        originalArtFile.name.split(".")[0] +
-        ".png"
-    );
-    var moveArtFile = new File(
-        'D:\\Gigapixel\\2022_01_30\\__scaled\\scaled_' +
-        originalArtFile.name.split(".")[0] +
-        "-art-scale-4_00x.png"
-    );
-    // var moveArtFile = new File('D:\\Gigapixel\\2022_01_30\\' + originalArtFile.name);
+    var smallArtFile = new File('D:\\Gigapixel\\2022_01_30\\' + originalArtFile.name);
+    var moveArtFile = new File('D:\\Gigapixel\\2022_01_30\\__scaled\\scaled_' + originalArtFile.name.split(".")[0] + "-art-scale-4_00x.png");
+
+    var cardIdsToSkip = [
+        // "68dce077-4ecd-406a-9052-05d5485ffa6f",
+        // fb248ba0-2ee7-4994-be57-2bcc8df29680
+
+        // Underground Sea
+        "962719f7-ff8e-480b-985e-bd53a111793b",
+        // Unholy Heat extra
+        "74afaf7e-424b-4aa5-a072-dfa6a8a57aed",
+        // Unlicensed Hearse extra
+        "69b35a25-8c7c-4c4e-905c-8db59e0d3f32",
+    ];
+    var useNormalExtendedIds = [
+        // Duals
+        "0829af6e-7dd9-4bce-bf14-1c5d509556cb",
+        "154ce456-38d2-4195-93b7-302e11c006e2",
+        "931184cf-0b9a-49d5-8234-a25b90dbaedb",
+        "2674e6d9-51b9-405c-ab01-75474abcf690",
+        "962719f7-ff8e-480b-985e-bd53a111793b",
+        "8ef5d61d-2648-4cbc-8083-3f3c6b362825",
+
+        // Vessell of Nascency
+        "89533790-38c2-4b53-90fa-8abf8c1a6abb",
+    ];
+    var flavorIdsToSkip = [
+        // Demonic Tutor
+        "b1676c4d-fcf3-4892-8458-5811f094b10d",
+        // Fatal Push
+        "307213e3-3c6a-4398-b46e-7a4561d3d980",
+    ];
+
     // overrides
-    var temp = getTemplateClass(layout, card);
+    if (in_array(useNormalExtendedIds, card.id))
+        var temp = ['NormalExtended', NormalExtendedTemplate];
+    else var temp = getTemplateClass(layout, card);
+
     var templateName = temp[0];
     var templateClass = temp[1];
 
-    var template = new templateClass(layout, moveArtFile, templateLocation);
+    var template = new templateClass(layout, moveArtFile, filePath, templateLocation);
 
     var renderDone = (new File(filePath + "/out/done/" + template.getLongCardName() + ".png")).exists ||
-        (new File(filePath + "/out/done_adjustments_1/" + template.getLongCardName() + ".png")).exists;
+        (new File(filePath + "/out/done_adjusted_1/" + template.getLongCardName() + ".png")).exists ||
+        (new File(filePath + "/out/done_adjusted_2/" + template.getLongCardName() + ".png")).exists ||
+        (new File(filePath + "/out/sta/" + template.getLongCardName() + ".png")).exists;
 
-    var cardIdsToSkip = [
-        "68dce077-4ecd-406a-9052-05d5485ffa6f"
-    ];
+    if (
+        // smallArtFile.exists && !moveArtFile.exists
+        !renderDone
+        && !template.renderExists(size)
+        && card.is_personal == false
+        // && smallArtFile.exists
+        // && moveArtFile.exists
 
-    var imageToBeReplaced = new File(
-        'D:\\Gigapixel\\2022_01_30\\imagesToBeReplaced\\_' +
-        originalArtFile.name.split(".")[0] +
-        ".png"
-    );
-    if (imageToBeReplaced.exists) {
-        log(card.name);
+        && card.type.indexOf("Saga") == -1
+        && templateName == "Womensday"
+        // && templateName != "Token"
+
+        // && !in_array(cardIdsToSkip, card.id)
+        // && (parseInt(card.number) < 64 || card.set == "SLD")
+    ) {
+        log(card.id);
+        log([card.name, templateName]);
+        // log(smallArtFile);
+
+        // log(smallArtFile.exists);
+        // log(moveArtFile.exists);
+
+        if (!moveArtFile.exists) {
+            log("Art does not exist");
+            exit();
+        }
+        if (card.flavor_name != null) {
+            log("Flavor name skip");
+        } else if (in_array(flavorIdsToSkip, card.id)) {
+            log("Flavor skip");
+        } else {
+            // clearHistory();
+            // template.execute();
+            // log(template.getLongCardName());
+            // template.saveCard(size);
+
+            // exit();
+        }
+    } else {
+        // log("Exists, skipping");
     }
-    // if (card.name == "Time Warp") {
-    //     log(card.name);
-    //     log(template.renderExists(size));
-    //     log(card.number);
-    //     log(card.set);
-    //     log(moveArtFile.exists);
-    //     log(card.printed_name);
-    // }
-    // if (
-    //     smallArtFile.exists &&
-    //     !moveArtFile.exists
-    //     // !template.renderExists(size)
-    //     // && !renderDone
-    //     // && (parseInt(card.number) < 64 || card.set == "SLD")
-    //     // // && card.is_personal == false
-    //     // && card.printed_name == null
-    //     // && moveArtFile.exists
-    //     // && (card.set != "STA" && !in_array(STAIds, card.id))
-    //     // && templateName == "WomensDay"
-    //     // && !in_array(cardIdsToSkip, card.id)
-    // ) {
-    //     log([card.name, templateName]);
-    //     // log(card.number);
-    //     // log(parseInt(card.number));
-    //     // log(parseInt(card.number) < 66);
-    //     // exit();
-
-    //     // clearHistory();
-    //     // template.execute();
-    //     // log(template.getLongCardName());
-    //     // template.saveCard(size);
-
-    //     // exit();
-    // } else {
-    //     // log("Exists, skipping");
-    // }
 }
 
 function cardIsBasic(card) {

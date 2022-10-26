@@ -96,7 +96,7 @@ function determine_symbol_colours(symbol, symbol_length) {
     const symbol_colour_map = {
         "W": rgb_w,
         "U": rgb_u,
-        "B": rgb_b,
+        "B": rgb_c,
         "R": rgb_r,
         "G": rgb_g,
         "2": rgb_c,

@@ -331,7 +331,7 @@ function strip_reminder_text(oracle_text) {
      */
 
     var oracle_text_stripped = oracle_text;
-    var parentheses_regex = /\(.*?\)/;
+    var parentheses_regex = /\(.*?\)/g;
     oracle_text_stripped = oracle_text_stripped.replace(parentheses_regex, "");
 
     // ensure we didn't add any double whitespace by doing that
