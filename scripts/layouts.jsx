@@ -151,7 +151,7 @@ var MeldLayout = Class({
 
         // determine if this card is a meld part or a meld result
         this.face = Faces.FRONT;
-        var all_parts = this.scryfall.all_parts
+        var all_parts = this.scryfall.all_parts;
         var meld_result_name = "";
         var meld_result_idx = 0;
         for (var i = 0; i < all_parts.length; i++) {
@@ -168,8 +168,10 @@ var MeldLayout = Class({
             this.other_face_power = this.scryfall.all_parts[meld_result_idx].info.power;
             this.other_face_toughness = this.scryfall.all_parts[meld_result_idx].info.toughness;
         }
-        this.transform_icon = this.scryfall.frame_effects[0];  // TODO: safe to assume the first frame effect will be the transform icon?
-
+        if (this.scryfall.frame_effects && this.scryfall.frame_effects.length > 0) {
+            this.transform_icon = this.scryfall.frame_effects[0];  // TODO: safe to assume the first frame effect will be the transform icon?
+        }
+        
         this.scryfall_scan = this.scryfall.image_uris.large;
     },
     get_default_class: function () {

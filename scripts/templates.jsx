@@ -683,9 +683,6 @@ var NormalTemplate = Class({
             power_toughness.visible = false;
         }
     },
-    // constructor: function (layout, file, file_path) {
-    //     this.super(layout, file, file_path);
-    // },
     open_template: function () {
         this.super();
         var docref = app.activeDocument;

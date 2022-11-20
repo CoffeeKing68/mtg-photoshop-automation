@@ -18,17 +18,19 @@ var filePath = File($.fileName).parent.parent.fsName;
 
 function main2() {
     var decklistNames = [
-        "BRAN",
-        "DANY",
-        "OTHERs",
-        "BLOODRAVEN", "TITANIA", "STONEHEART",
-        "OBEKA", "IRON_BANK", "MAEGOR",
-        "VISENYA", "UG_FLASH", "MODERN",
+        // "BRAN",
+        // "DANY",
+        // "OTHERs",
+        // "BLOODRAVEN", "TITANIA", "STONEHEART",
+        // "OBEKA", "IRON_BANK", "MAEGOR",
+        // "VISENYA", "UG_FLASH", "MODERN",
         // "ELD1",
         // "ELD2",
-        "VINTAGE",
+        // "VINTAGE",
         // "TOKENS", 
-        // "STA"
+        // "STA",
+        "EXTRA",
+        "TITANIA",
     ];
 
     for (var i = 0; i < decklistNames.length; i++) {
@@ -45,7 +47,7 @@ function main2() {
 }
 
 function exportCard(card) {
-    // log(card.name);
+    log(card.name);
     card.oracle_text = card.text ? card.text : "";
     card.flavour_text = (card.flavor) ? card.flavor : "";
     card.power = (card.power != null) ? card.power : undefined;
@@ -82,7 +84,7 @@ function exportCard(card) {
 
     // select and execute the template - insert text fields, set visibility of layers, etc. - and save to disk
     var originalArtFile = new File(card.image_location);
-    var smallArtFile = new File('D:\\Gigapixel\\2022_01_30\\' + originalArtFile.name);
+    // var smallArtFile = new File('D:\\Gigapixel\\2022_01_30\\' + originalArtFile.name);
     var moveArtFile = new File('D:\\Gigapixel\\2022_01_30\\__scaled\\scaled_' + originalArtFile.name.split(".")[0] + "-art-scale-4_00x.png");
 
     var cardIdsToSkip = [
@@ -95,6 +97,44 @@ function exportCard(card) {
         "74afaf7e-424b-4aa5-a072-dfa6a8a57aed",
         // Unlicensed Hearse extra
         "69b35a25-8c7c-4c4e-905c-8db59e0d3f32",
+        // Historic Ulamog
+        "852da9d9-5c88-4375-a756-511c5df00053",
+        // Eyeless Watcher small art
+        "4d949d0e-baf7-4573-bb15-7e30e3e9b202",
+        // Herald of Kozilek
+        "2a4180ae-1fd9-4185-b4f0-9e8f668a5737",
+        // Kozilek's Return
+        "55ae93d4-c72d-47f6-9e15-fc7edf88a6c0",
+        // Nettle Drone
+        "e633833a-cc4b-4c8c-a0d3-cd263e09df81",
+
+        // No Mercy
+        "4133fcbc-de7b-4270-b6c5-8246f290c8cf",
+        
+        // Rakdos Charm
+        // "05741d2b-4aed-47f5-899e-7ed38e84ea39",
+        // Caves of Koilos
+        // "7328a565-966d-4053-b32b-25bdce031d9f",
+        // Underground River // Volkan Baga
+        "eb52820c-8660-4c4a-bb64-5b2fc580b6a3",
+        // Ancestral Recall // Copyright // Volkan Baga
+        // "f80c78c9-1e92-438c-b449-4f05610fe31c",
+        // // Force of Will // Copyright
+        // "6e7b0e29-09d9-4b3e-ab94-f1f4a61d9159",
+        // // Bazaar of Baghdad // Crop
+        // "9f0bc2a6-f966-4abe-afb3-d51403f7b9ed",
+        // // Time Walk // Crop
+        // "79973829-e203-4108-a819-0617e58c7e78",
+        // // The Tabernacle at Pendrell Vale // Copyright
+        // "a8c697b0-d8af-4539-b955-56ba3c1eb24a",
+        // Angrath // Artist Name
+        "beab1010-3d63-44f0-9f01-43b5e35aa5f1",
+        // Titania, Gaea Incarnate
+        "414b9230-9d25-4bdf-8b1e-b4fa2035b6a4",
+        // Argoth, Sanctum of Nature
+        "b29c9e4f-7b98-4610-a681-ae6297e8fc72",
+        // Titania, Voice of Gaea
+        "deeb6a21-23b0-44f1-b70e-5899bb9d4a84"
     ];
     var useNormalExtendedIds = [
         // Duals
@@ -107,6 +147,31 @@ function exportCard(card) {
 
         // Vessell of Nascency
         "89533790-38c2-4b53-90fa-8abf8c1a6abb",
+        // Growth Spasm
+        "d8a6849b-6391-4c2c-97bd-267a31e57b38",
+        // Animate Dead
+        "f9e02314-bb21-48d0-b0c9-2824583b9c6f",
+        // Norn's Annex
+        "a64073f2-99f5-4dc7-9403-e7cb94ce0e60",
+        // Master of Cruelties
+        "7b4d8ab5-252c-4727-817d-6f18cbaedd91",
+        // Mox Sapphire
+        "8c4ab6f6-bcb1-4369-9d05-3582b2639eed",
+        // Mox Jet
+        "1f5a1578-d5fe-4b31-bb71-3253be8775a1",
+        // Mox Sapphire
+        "c88832e3-218d-4b4b-9a5f-4389cf0a900c",
+        // Gaea's Cradle
+        "cf0ca29f-6f81-4336-b182-e03b4da4b7dd"
+    ];
+    var useWomensDayIds = [
+        "e0e26f6c-44e9-4d6f-8eb1-efdef8d04ff5",
+    ];
+    var useClassicIds = [
+        // Lignify
+        "264fd6c5-8d73-4928-aed7-5ed637426780",
+        // Sunstone
+        "3c1c67fa-ff88-4a61-b8a5-8a872b3dc44f",
     ];
     var flavorIdsToSkip = [
         // Demonic Tutor
@@ -116,59 +181,67 @@ function exportCard(card) {
     ];
 
     // overrides
-    if (in_array(useNormalExtendedIds, card.id))
+    if (in_array(useNormalExtendedIds, card.id)) {
         var temp = ['NormalExtended', NormalExtendedTemplate];
-    else var temp = getTemplateClass(layout, card);
-
+    } else if (in_array(useClassicIds, card.id)) {
+        var temp = ['NormalClassic', NormalClassicTemplate];
+    } else if (in_array(useWomensDayIds, card.id)) {
+        var temp = ['WomensDay', WomensDayTemplate];
+    } else {
+        var temp = getTemplateClass(layout, card);
+    }
+    
     var templateName = temp[0];
     var templateClass = temp[1];
-
+    
     var template = new templateClass(layout, moveArtFile, filePath, templateLocation);
-
+    var cDriveSaveLocation = "C:\\Users\\Ashley Minshall\\Desktop\\MTG ps\\mtg-photoshop-automation\\out\\large";
+    var cDriveSave = new File(cDriveSaveLocation + "\\" + template.getLongCardName() + ".png");
     var renderDone = (new File(filePath + "/out/done/" + template.getLongCardName() + ".png")).exists ||
         (new File(filePath + "/out/done_adjusted_1/" + template.getLongCardName() + ".png")).exists ||
         (new File(filePath + "/out/done_adjusted_2/" + template.getLongCardName() + ".png")).exists ||
-        (new File(filePath + "/out/sta/" + template.getLongCardName() + ".png")).exists;
+        (new File(filePath + "/out/Eldrazi/" + template.getLongCardName() + ".png")).exists ||
+        (new File(filePath + "/out/sta/" + template.getLongCardName() + ".png")).exists ||
+        cDriveSave.exists;
 
     if (
         // smallArtFile.exists && !moveArtFile.exists
-        !renderDone
-        && !template.renderExists(size)
+        !(renderDone || template.renderExists(size))
         && card.is_personal == false
         // && smallArtFile.exists
-        // && moveArtFile.exists
+        && moveArtFile.exists
 
         && card.type.indexOf("Saga") == -1
-        && templateName == "Womensday"
+        // && (templateName != "PlaneswalkerExtended")
+//  || templateName == "WomensDay"
         // && templateName != "Token"
 
-        // && !in_array(cardIdsToSkip, card.id)
+        && !in_array(cardIdsToSkip, card.id)
         // && (parseInt(card.number) < 64 || card.set == "SLD")
     ) {
         log(card.id);
         log([card.name, templateName]);
-        // log(smallArtFile);
-
-        // log(smallArtFile.exists);
-        // log(moveArtFile.exists);
 
         if (!moveArtFile.exists) {
             log("Art does not exist");
-            exit();
-        }
-        if (card.flavor_name != null) {
+        } else if (card.flavor_name != null) {
             log("Flavor name skip");
         } else if (in_array(flavorIdsToSkip, card.id)) {
             log("Flavor skip");
         } else {
-            // clearHistory();
-            // template.execute();
-            // log(template.getLongCardName());
-            // template.saveCard(size);
+            clearHistory();
+            template.execute();
+            log(template.getLongCardName());
 
-            // exit();
+            // savePngImage(cDriveSaveLocation, template.getLongCardName());
+
+            // template.saveCard(size);
+            exit();
         }
     } else {
+        if (!(renderDone || template.renderExists(size))) {
+            log(["SKIPPED", card.name, templateName]);
+        }
         // log("Exists, skipping");
     }
 }
